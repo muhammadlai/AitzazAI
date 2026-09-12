@@ -47,7 +47,7 @@
 <script>
 const $=id=>document.getElementById(id);
 const qs=new URLSearchParams(location.search);
-const initialApi=qs.get('api') || localStorage.getItem('sara_api_base') || '';
+const initialApi=qs.get('api') || localStorage.getItem('sara_api_base') || ((location.hostname.endsWith('.vercel.app') || location.hostname === 'vercel.app') ? location.origin : '');
 let API_BASE=initialApi.replace(/\/$/,'');
 const sessionId=localStorage.getItem('sara_session')||crypto.randomUUID();
 localStorage.setItem('sara_session',sessionId);$('sessionId').value=sessionId;$('apiBaseInput').value=API_BASE;
