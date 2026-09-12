@@ -1,14 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080a12"><meta name="description" content="SARA AI Creator"><title>SARA — AI Creator</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a12">
+<meta name="description" content="SARA AI Creator — Master Advanced AI Agent">
+<title>SARA — Master AI Agent</title>
 <link rel="stylesheet" href="./assets/sara.css">
+<style>
+.voicebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}.voicebar .voice-state{font-size:12px;opacity:.75}.active{outline:1px solid rgba(170,90,255,.8)!important}.live-tools{display:grid;gap:12px}.live-status{padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.03)}.live-status b{display:block;margin-bottom:5px}.hint{font-size:12px;opacity:.72;line-height:1.5}.tool-actions{display:flex;gap:8px;flex-wrap:wrap}.action{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}.hidden{display:none!important}
+</style>
 </head>
 <body>
 <div class="shell">
 <aside class="sidebar">
-  <div class="brand"><div class="brand-avatar">S</div><div><b>SARA</b><small>AI Creator</small></div><span>👑</span></div>
+  <div class="brand"><div class="brand-avatar">S</div><div><b>SARA</b><small>Master AI Agent</small></div><span>👑</span></div>
   <nav>
     <button class="nav active" data-tab="home">⌂ <span>Home</span></button>
     <button class="nav" data-tab="chat">💬 <span>Chat</span></button>
@@ -21,33 +27,44 @@
   <p class="quote">“Main yahin hoon Aitzaz… ❤️”</p>
 </aside>
 <main class="main">
-<header class="topbar"><div><strong>SARA</strong><span>Your AI Bestie</span></div><div class="top-actions"><span class="live-pill"><i></i><span id="status">D-ID connecting…</span></span><button id="topFs" class="icon-btn">⛶</button></div></header>
+<header class="topbar"><div><strong>SARA</strong><span>Your Master AI Agent</span></div><div class="top-actions"><span class="live-pill"><i></i><span id="status">Starting voice + avatar…</span></span><button id="topFs" class="icon-btn" title="Fullscreen">⛶</button></div></header>
 <section class="workspace">
 <section class="stage-wrap">
-  <div class="stage-head"><div><b>Live SARA</b><small>Real-time AI avatar</small></div><span class="tag">D-ID Agent</span></div>
-  <div id="sara-agent" class="agent"><div class="fallback"><div class="pulse">S</div><h1>SARA</h1><p>Real-time AI host is loading…</p><button id="retry">Reconnect</button></div></div>
-  <div class="controls"><button id="mic" disabled>🎙️ <span>Mic</span></button><button id="intro" class="primary">◉ <span>SARA Bolo</span></button><button id="fs">⛶ <span>Full Screen</span></button></div>
-  <div class="cap-row"><span>🧠 OpenAI Brain</span><span>💾 Persistent Memory</span><span>🌐 Urdu · Hindi · English</span></div>
+  <div class="stage-head"><div><b>Live SARA</b><small>Real-time AI avatar + voice</small></div><span class="tag">D-ID Agent</span></div>
+  <div id="sara-agent" class="agent"><div class="fallback"><div class="pulse">S</div><h1>SARA</h1><p>Connecting to live avatar…</p><button id="retry">Reconnect</button></div></div>
+  <div class="controls">
+    <button id="mic" disabled>🎙️ <span>Mic</span></button>
+    <button id="intro" class="primary">◉ <span>SARA Bolo</span></button>
+    <button id="fs">⛶ <span>Full Screen</span></button>
+  </div>
+  <div class="voicebar"><span id="voiceState" class="voice-state">Voice engine: starting…</span><button id="voiceTest" class="action">🔊 Test Voice</button></div>
+  <div class="cap-row"><span>🧠 OpenAI Brain</span><span>💾 Memory</span><span>🎙️ Voice + Mic</span><span>🌐 Urdu · Hindi · English</span></div>
 </section>
 <aside class="chat-panel">
-  <div class="chat-head"><div><b>Chat with SARA</b><small>Natural Urdu / Hindi conversation</small></div><span class="online-dot"></span></div>
+  <div class="chat-head"><div><b>Chat with SARA</b><small>Natural Urdu / Hindi / English</small></div><span class="online-dot"></span></div>
   <div id="messages" class="messages"></div>
   <form id="chatForm" class="composer"><input id="chatInput" autocomplete="off" placeholder="Type a message…"><button>➤</button></form>
-  <div class="quick"><button data-msg="Assalam o Alaikum SARA!">Salam</button><button data-msg="Tumhara boss kaun hai?">Boss?</button><button data-msg="Mujhe koi funny baat sunao.">Funny</button></div>
+  <div class="quick"><button type="button" data-msg="Assalam o Alaikum SARA!">Salam</button><button type="button" data-msg="Tumhara boss kaun hai?">Boss?</button><button type="button" data-msg="TikTok LIVE ke liye meri tayari karo.">LIVE</button></div>
 </aside>
 </section>
-<section class="tab-panel" id="tab-home"><div class="cards"><article><span>🤖</span><b>OpenAI</b><small>AI Brain</small></article><article><span>🧠</span><b>Memory</b><small>Persistent</small></article><article><span>♪</span><b>TikTok</b><small>Creator Tools</small></article><article><span>📈</span><b>Analytics</b><small>API Ready</small></article></div></section>
-<section class="tab-panel hidden" id="tab-chat"><h2>Conversation</h2><p>Chat in the right panel. SARA can speak answers through the D-ID avatar.</p></section>
-<section class="tab-panel hidden" id="tab-tiktok"><div class="tool-box"><h2>♪ TikTok Creator</h2><p id="ttStatus">Checking connection…</p><div class="tool-actions"><a id="ttConnect" class="action" href="#">Connect TikTok</a><button id="creatorInfo" class="action">Creator Info</button></div><pre id="ttOutput"></pre><hr><h3>Post hosted video</h3><form id="postForm" class="post-form"><input id="videoUrl" type="url" placeholder="HTTPS video URL"><input id="videoTitle" maxlength="150" placeholder="Caption / title"><select id="privacy"><option value="SELF_ONLY">Private</option><option value="MUTUAL_FOLLOW_FRIENDS">Friends</option><option value="PUBLIC_TO_EVERYONE">Public (approved access)</option></select><button>Send to TikTok</button></form></div></section>
-<section class="tab-panel hidden" id="tab-memory"><div class="tool-box"><h2>🧠 SARA Memory</h2><p>Conversation memory is stored server-side.</p><button id="clearMemory" class="danger">Clear this session</button></div></section>
-<section class="tab-panel hidden" id="tab-settings"><div class="tool-box"><h2>⚙ Settings</h2><label>Session ID<input id="sessionId" readonly></label><label>Backend URL<input id="apiBaseInput" placeholder="https://your-sara-backend.onrender.com"></label><button id="saveApi" class="action">Save backend</button><p class="muted">API keys stay on the server. On GitHub Pages, set the Render backend URL here once; it is saved locally.</p><p id="healthText" class="muted">Checking backend…</p></div></section>
+<section class="tab-panel" id="tab-home"><div class="cards"><article><span>🤖</span><b>OpenAI</b><small>AI Brain</small></article><article><span>🧠</span><b>Memory</b><small>Session Memory</small></article><article><span>♪</span><b>TikTok</b><small>Creator Tools</small></article><article><span>🎙️</span><b>Voice</b><small>Mic + Speech</small></article></div></section>
+<section class="tab-panel hidden" id="tab-chat"><h2>Conversation</h2><p>Chat in the right panel. SARA uses the server AI brain and speaks through D-ID when connected, with browser voice fallback when D-ID is unavailable.</p></section>
+<section class="tab-panel hidden" id="tab-tiktok">
+  <div class="tool-box"><h2>♪ TikTok Creator</h2><p id="ttStatus">Checking connection…</p>
+    <div class="tool-actions"><a id="ttConnect" class="action" href="#">Connect TikTok</a><button id="creatorInfo" class="action">Creator Info</button></div><pre id="ttOutput"></pre>
+    <hr><h3>Post hosted video</h3><form id="postForm" class="post-form"><input id="videoUrl" type="url" placeholder="HTTPS video URL"><input id="videoTitle" maxlength="150" placeholder="Caption / title"><select id="privacy"><option value="SELF_ONLY">Private</option><option value="MUTUAL_FOLLOW_FRIENDS">Friends</option><option value="PUBLIC_TO_EVERYONE">Public (approved access)</option></select><button>Send to TikTok</button></form>
+  </div>
+  <div class="tool-box live-tools"><h2>🔴 TikTok LIVE Control Center</h2><div class="live-status"><b id="liveState">LIVE not started</b><span class="hint">SARA can prepare the avatar, voice, script and scene. TikTok LIVE Studio performs the actual broadcast because TikTok's public Content Posting API does not expose a general LIVE-start endpoint.</span></div><div class="tool-actions"><a class="action" target="_blank" rel="noopener" href="https://www.tiktok.com/studio/download">Open TikTok LIVE Studio</a><a class="action" target="_blank" rel="noopener" href="https://www.tiktok.com/live/studio/help">LIVE Studio Help</a><button id="prepareLive" class="action">Prepare SARA LIVE</button></div><textarea id="liveScript" rows="7" placeholder="LIVE script / topic…">Assalam o Alaikum! Main SARA hoon. Aaj hum Aitzaz ke saath live hain. Comments mein apna sawal bhejein ❤️</textarea><button id="speakLive" class="primary">🔊 Speak LIVE Intro</button><p class="hint">Windows par TikTok LIVE Studio install karke SARA ke browser/avatar window ko scene source ke taur par use kiya ja sakta hai. LIVE access TikTok account eligibility par depend karta hai.</p></div>
+</section>
+<section class="tab-panel hidden" id="tab-memory"><div class="tool-box"><h2>🧠 SARA Memory</h2><p>Conversation memory is stored server-side when the Render backend is used.</p><button id="clearMemory" class="danger">Clear this session</button></div></section>
+<section class="tab-panel hidden" id="tab-settings"><div class="tool-box"><h2>⚙ Master Settings</h2><label>Session ID<input id="sessionId" readonly></label><label>Backend URL<input id="apiBaseInput" placeholder="https://your-sara-backend.onrender.com"></label><button id="saveApi" class="action">Save backend</button><p class="muted">API keys stay on the server. Vercel uses /api automatically; Render can be selected here.</p><p id="healthText" class="muted">Checking backend…</p><hr><p class="hint">Voice fallback: browser Speech Recognition + Speech Synthesis. D-ID remains the live avatar engine when its client key/domain is authorized.</p></div></section>
 </main></div>
 <script type="module" src="https://agent.d-id.com/v2/index.js" data-mode="full" data-target-id="sara-agent" data-client-key="ck_HKSbJtwQnIv6enW8MuCz1" data-agent-id="v2_agt_UZimmP85" data-name="did-agent" data-orientation="vertical" data-open-mode="expanded" data-auto-connect="true"></script>
 <script src="./assets/did-bridge.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const qs=new URLSearchParams(location.search);
-const initialApi=qs.get('api') || localStorage.getItem('sara_api_base') || ((location.hostname.endsWith('.vercel.app') || location.hostname === 'vercel.app') ? location.origin : '');
+const initialApi=qs.get('api')||localStorage.getItem('sara_api_base')||((location.hostname.endsWith('.vercel.app')||location.hostname==='vercel.app')?location.origin:'');
 let API_BASE=initialApi.replace(/\/$/,'');
 const sessionId=localStorage.getItem('sara_session')||crypto.randomUUID();
 localStorage.setItem('sara_session',sessionId);$('sessionId').value=sessionId;$('apiBaseInput').value=API_BASE;
@@ -55,17 +72,29 @@ let chatCount=0;
 function addMsg(role,text){const d=document.createElement('div');d.className='msg '+role;const who=document.createElement('span');who.textContent=role==='sara'?'SARA':'You';const p=document.createElement('p');p.textContent=text;d.append(who,p);$('messages').appendChild(d);$('messages').scrollTop=$('messages').scrollHeight;if(role==='you')$('chatCount').textContent=String(++chatCount)}
 function url(path){return (API_BASE||location.origin)+path}
 async function api(path,opts={}){return fetch(url(path),opts)}
-async function say(text){const apiObj=window.DID_AGENTS_API;if(!apiObj?.functions?.speak)return false;try{await apiObj.functions.speak({type:'text',input:text});return true}catch(e){console.warn(e);return false}}
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null, listening=false;
+const hasSpeech=!!window.speechSynthesis;
+$('voiceState').textContent=hasSpeech?'Voice engine: browser ready':'Voice engine: unavailable';
+function browserSpeak(text){if(!hasSpeech)return false;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text));u.lang=/[\u0600-\u06FF]/.test(text)?'ur-PK':'en-US';u.rate=.96;u.pitch=1.05;speechSynthesis.speak(u);$('voiceState').textContent='Voice engine: speaking';u.onend=()=>{$('voiceState').textContent='Voice engine: ready'};return true}catch{return false}}
+async function say(text){const apiObj=window.DID_AGENTS_API;if(apiObj?.functions?.speak){try{await apiObj.functions.speak({type:'text',input:text});$('voiceState').textContent='Voice engine: D-ID speaking';return true}catch(e){console.warn('[SARA] D-ID speak failed',e)}}return browserSpeak(text)}
+function startBrowserMic(){if(!SpeechRecognition){$('voiceState').textContent='Mic: browser speech recognition unsupported';return false}if(!recognition){recognition=new SpeechRecognition();recognition.continuous=false;recognition.interimResults=false;recognition.lang='ur-PK';recognition.onstart=()=>{listening=true;$('mic').classList.add('active');$('mic').querySelector('span').textContent='Listening';$('voiceState').textContent='Mic: listening…'};recognition.onresult=e=>{const text=Array.from(e.results).map(x=>x[0].transcript).join(' ');if(text)send(text)};recognition.onerror=e=>{$('voiceState').textContent='Mic error: '+e.error};recognition.onend=()=>{listening=false;$('mic').classList.remove('active');$('mic').querySelector('span').textContent='Mic';if(!$('voiceState').textContent.startsWith('Voice engine: speaking'))$('voiceState').textContent='Voice engine: ready'}}
+try{recognition.start();return true}catch{return false}}
+function stopBrowserMic(){try{recognition?.stop()}catch{}}
+$('mic').disabled=false;$('mic').title='Use D-ID mic when connected; browser mic fallback otherwise';$('mic').onclick=async()=>{if(listening){stopBrowserMic();return}const did=window.DID_AGENTS_API;if(did?.functions?.toggleMicState){try{await did.functions.toggleMicState();$('mic').classList.toggle('active');$('mic').querySelector('span').textContent=$('mic').classList.contains('active')?'Mic On':'Mic';return}catch(e){console.warn(e)}}startBrowserMic()};
 async function checkHealth(){if(!API_BASE){$('healthText').textContent='Backend URL not configured yet.';return}try{const r=await api('/api/health');const d=await r.json();$('healthText').textContent=r.ok?`Backend online · ${d.name} ${d.version}`:`Backend error: ${d.error||r.status}`;if(r.ok){$('sideStatus').textContent='Backend online';$('sideStatusText').textContent='SARA services ready'}}catch{$('healthText').textContent='Backend unreachable.'}}
-async function send(text){text=String(text||'').trim();if(!text)return;addMsg('you',text);$('chatInput').value='';if(!API_BASE){addMsg('sara','Backend URL abhi Settings mein set karna hai.');return}try{const r=await api('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId,message:text})});const data=await r.json();if(!r.ok){addMsg('sara',data.error||'SARA server error');return}addMsg('sara',data.answer);$('memoryCount').textContent=String(Number($('memoryCount').textContent||0)+2);await say(data.answer)}catch{addMsg('sara','Backend connection error.')}}
+async function send(text){text=String(text||'').trim();if(!text)return;addMsg('you',text);$('chatInput').value='';if(!API_BASE){const fallback='Main abhi browser voice mode mein hoon. Backend URL Settings mein set karein.';addMsg('sara',fallback);await say(fallback);return}try{const r=await api('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId,message:text})});const data=await r.json();if(!r.ok){addMsg('sara',data.error||'SARA server error');return}addMsg('sara',data.answer);$('memoryCount').textContent=String(Number($('memoryCount').textContent||0)+2);await say(data.answer)}catch{const m='Backend connection error. Main browser voice mode mein hoon.';addMsg('sara',m);await say(m)}}
 $('chatForm').onsubmit=e=>{e.preventDefault();send($('chatInput').value)};document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>send(b.dataset.msg));
-$('intro').onclick=()=>say('Assalam o Alaikum! Main SARA hoon. Main Aitzaz ki AI agent hoon. Aaj hum kya baat karein?');$('retry').onclick=()=>location.reload();$('fs').onclick=()=>window.DID_AGENTS_API?.functions.requestFullscreen(true);$('topFs').onclick=()=>window.DID_AGENTS_API?.functions.requestFullscreen(true);
+$('intro').onclick=()=>say('Assalam o Alaikum! Main SARA hoon. Main Aitzaz ki AI agent hoon. Aaj hum kya baat karein?');$('voiceTest').onclick=()=>say('Assalam o Alaikum Aitzaz! SARA ki voice test successful hai.');$('retry').onclick=()=>location.reload();$('fs').onclick=()=>window.DID_AGENTS_API?.functions.requestFullscreen(true);$('topFs').onclick=()=>window.DID_AGENTS_API?.functions.requestFullscreen(true);
 $('clearMemory').onclick=async()=>{if(!API_BASE)return;await api('/api/memories',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId})});$('messages').innerHTML='';$('memoryCount').textContent='0'};
 $('saveApi').onclick=()=>{API_BASE=$('apiBaseInput').value.trim().replace(/\/$/,'');localStorage.setItem('sara_api_base',API_BASE);checkHealth();loadTikTok()};
 document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+b.dataset.tab).classList.remove('hidden');if(b.dataset.tab==='tiktok')loadTikTok()});
 async function loadTikTok(){if(!API_BASE){$('ttStatus').textContent='Set backend URL in Settings';$('ttConnect').href='#';return}$('ttConnect').href=url('/auth/tiktok');try{const r=await api('/api/tiktok/status');const d=await r.json();$('ttStatus').textContent=d.connected?'TikTok connected':'TikTok not connected'}catch{$('ttStatus').textContent='Backend unavailable'}}
 $('creatorInfo').onclick=async()=>{if(!API_BASE)return;const r=await api('/api/tiktok/creator-info');$('ttOutput').textContent=JSON.stringify(await r.json(),null,2)};
 $('postForm').onsubmit=async e=>{e.preventDefault();if(!API_BASE)return;const r=await api('/api/tiktok/post-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({videoUrl:$('videoUrl').value,title:$('videoTitle').value,privacyLevel:$('privacy').value})});$('ttOutput').textContent=JSON.stringify(await r.json(),null,2)};
+$('prepareLive').onclick=async()=>{const text='LIVE prepared. Scene: SARA avatar. Voice: enabled. Mic: browser/D-ID. Topic: '+($('liveScript').value.trim()||'General chat');$('liveState').textContent='🟢 LIVE setup ready — open LIVE Studio to broadcast';await say('TikTok LIVE setup ready hai. LIVE Studio khol kar SARA ko scene mein add karein. '+($('liveScript').value.trim()||''))};
+$('speakLive').onclick=()=>say($('liveScript').value);
 addMsg('sara','Assalam o Alaikum! Main SARA hoon. Aap mujhse Urdu, Hindi ya English mein baat kar sakte hain. ❤️');checkHealth();loadTikTok();
 </script>
-</body></html>
+</body>
+</html>
