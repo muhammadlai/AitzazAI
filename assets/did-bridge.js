@@ -7,6 +7,8 @@
   const voiceState = document.getElementById('voiceState');
   let connected = false;
   let api = null;
+  let originalSpeak = null;
+  let voicePatched = false;
 
   const setStatus = (text, online = false) => {
     if (!status) return;
@@ -27,6 +29,41 @@
     }, 100);
   });
 
+  const getVoiceBase = () => {
+    const configured = localStorage.getItem('sara_api_base');
+    return (configured || location.origin).replace(/\/$/, '');
+  };
+
+  async function patchVoice() {
+    if (!api?.functions?.speak || voicePatched) return;
+    originalSpeak = api.functions.speak.bind(api.functions);
+    const voiceBase = getVoiceBase();
+    try {
+      const r = await fetch(`${voiceBase}/api/voice/status`, { cache: 'no-store' });
+      const info = await r.json();
+      if (!info?.configured) {
+        if (voiceState) voiceState.textContent = 'Voice engine: D-ID/browser fallback';
+        return;
+      }
+      api.functions.speak = async ({ type, input }) => {
+        if (type !== 'text' || !input) return originalSpeak({ type, input });
+        const audioUrl = `${voiceBase}/api/voice?text=${encodeURIComponent(String(input))}`;
+        try {
+          if (voiceState) voiceState.textContent = 'Voice engine: Pakistani voice';
+          setStatus('SARA speaking', true);
+          return await originalSpeak({ type: 'audio', input: audioUrl });
+        } catch (e) {
+          console.warn('[SARA] Custom voice failed, using D-ID voice', e);
+          return originalSpeak({ type: 'text', input });
+        }
+      };
+      voicePatched = true;
+      if (voiceState) voiceState.textContent = 'Voice engine: Pakistani voice ready';
+    } catch (e) {
+      console.warn('[SARA] Voice status unavailable', e);
+    }
+  }
+
   const markOffline = (message = 'SARA ready hai. Live avatar abhi connect nahi hua.') => {
     connected = false;
     setStatus('SARA avatar offline');
@@ -35,7 +72,6 @@
     if (voiceState && !voiceState.textContent.includes('speaking')) voiceState.textContent = 'Voice engine: fallback ready';
   };
 
-  // Never leave the user on an endless Loading screen.
   setTimeout(() => { if (!connected) markOffline('SARA ready hai. D-ID avatar connect nahi hua — Reconnect try karein.'); }, 10000);
   if (mic) mic.disabled = false;
 
@@ -50,6 +86,7 @@
       mic.disabled = false;
       mic.title = 'D-ID microphone; browser voice fallback available';
     }
+    patchVoice();
 
     api.events.on('connection', ({ state }) => {
       const s = String(state || '').toLowerCase();
@@ -58,6 +95,7 @@
         setStatus('SARA online', true);
         setFallback('', false);
         if (mic) mic.disabled = false;
+        patchVoice();
       } else if (s === 'connecting' || s === 'new') {
         setStatus('D-ID connecting…');
         setFallback('SARA se secure connection ban raha hai…');
@@ -90,16 +128,16 @@
       const s = String(state || '').toUpperCase();
       if (s === 'TALKING') {
         setStatus('SARA speaking', true);
-        if (voiceState) voiceState.textContent = 'Voice engine: SARA speaking';
+        if (voiceState) voiceState.textContent = voicePatched ? 'Voice engine: Pakistani voice' : 'Voice engine: SARA speaking';
       } else if (s === 'LOADING') {
         setStatus('SARA thinking…', true);
         if (voiceState) voiceState.textContent = 'Voice engine: thinking';
       } else if (s === 'IDLE') {
         setStatus('SARA online', true);
-        if (voiceState) voiceState.textContent = 'Voice engine: ready';
+        if (voiceState) voiceState.textContent = voicePatched ? 'Voice engine: Pakistani voice ready' : 'Voice engine: ready';
       }
     });
   });
 
-  window.SARA_DID_STATE = () => ({ connected, api });
+  window.SARA_DID_STATE = () => ({ connected, api, voicePatched });
 })();
