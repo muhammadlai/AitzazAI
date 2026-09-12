@@ -4,13 +4,13 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.Window
+import android.view.WindowManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.view.Window
-import android.view.WindowManager
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -24,11 +24,9 @@ class MainActivity : Activity() {
 
         webView = WebView(this)
         setContentView(webView)
-
         configureWebView()
 
-        if (android.os.Build.VERSION.SDK_INT >= 23 &&
-            checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), micRequestCode)
         } else {
             loadSara()
@@ -36,16 +34,14 @@ class MainActivity : Activity() {
     }
 
     private fun configureWebView() {
-        with(webView.settings) {
-            javaScriptEnabled = true
-            domStorageEnabled = true
-            databaseEnabled = true
-            mediaPlaybackRequiresUserGesture = false
-            allowContentAccess = true
-            allowFileAccess = false
-            javaScriptCanOpenWindowsAutomatically = true
-            userAgentString = "$userAgentString SARA-Android/1.1"
-        }
+        val settings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.mediaPlaybackRequiresUserGesture = false
+        settings.allowContentAccess = true
+        settings.allowFileAccess = false
+        settings.javaScriptCanOpenWindowsAutomatically = true
+        settings.userAgentString = "${settings.userAgentString} SARA-Android/1.2"
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = false
@@ -54,13 +50,9 @@ class MainActivity : Activity() {
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
                 runOnUiThread {
-                    val audioOnly = request.resources.filter {
-                        it == PermissionRequest.RESOURCE_AUDIO_CAPTURE
-                    }.toTypedArray()
-
-                    if (audioOnly.isNotEmpty() &&
-                        checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                        request.grant(audioOnly)
+                    val audio = request.resources.filter { it == PermissionRequest.RESOURCE_AUDIO_CAPTURE }.toTypedArray()
+                    if (audio.isNotEmpty() && checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        request.grant(audio)
                     } else {
                         request.deny()
                     }
@@ -75,15 +67,7 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == micRequestCode) {
-            // Load SARA only after Android has finished the microphone permission flow.
-            // This prevents D-ID WebRTC from starting before WebView has microphone access.
-            loadSara()
-        }
-    }
-
-    override fun onBackPressed() {
-        if (webView.canGoBack()) webView.goBack() else super.onBackPressed()
+        if (requestCode == micRequestCode) loadSara()
     }
 
     override fun onDestroy() {
