@@ -1,11 +1,19 @@
 (() => {
   const mic = document.getElementById('mic');
   const status = document.getElementById('status');
+  const fallback = document.querySelector('#sara-agent .fallback');
+  const fallbackText = fallback?.querySelector('p');
+  const retry = document.getElementById('retry');
 
   const setStatus = (text, online = false) => {
     if (!status) return;
     status.textContent = text;
     status.className = 'status ' + (online ? 'online' : 'offline');
+  };
+
+  const setFallback = (text, showRetry = true) => {
+    if (fallbackText) fallbackText.textContent = text;
+    if (retry) retry.style.display = showRetry ? '' : 'none';
   };
 
   const waitForApi = (timeout = 15000) => new Promise(resolve => {
@@ -25,35 +33,52 @@
   waitForApi().then(api => {
     if (!api) {
       setStatus('D-ID API not loaded');
+      setFallback('D-ID embed load nahi hua. Reconnect try karein.');
       return;
     }
 
     api.events.on('connection', ({ state }) => {
-      if (state === 'connected') {
+      const s = String(state || '').toLowerCase();
+      if (s === 'connected') {
         setStatus('SARA online', true);
+        setFallback('SARA live hai.', false);
         if (mic) mic.disabled = false;
-      } else if (state === 'connecting' || state === 'new') {
+      } else if (s === 'connecting' || s === 'new') {
         setStatus('D-ID connecting…');
-      } else if (state === 'disconnected' || state === 'closed') {
+        setFallback('SARA se secure connection ban raha hai…');
+      } else if (s === 'disconnected' || s === 'closed') {
         setStatus('D-ID disconnected');
+        setFallback('D-ID connection band ho gaya. Reconnect karein.');
         if (mic) mic.disabled = true;
-      } else if (state === 'fail') {
+      } else if (s === 'fail' || s === 'failed') {
         setStatus('D-ID unavailable');
+        setFallback('D-ID connection fail hua. Client key/domain settings check karein.');
         if (mic) mic.disabled = true;
       }
     });
 
     api.events.on('error', ({ error }) => {
       console.error('[SARA] D-ID error', error);
-      const code = error?.code || error?.type;
-      setStatus(code ? `D-ID error: ${code}` : 'D-ID error');
+      const code = error?.code || error?.type || '';
+      const c = String(code).toUpperCase();
+      if (c.includes('AUTH')) {
+        setStatus('D-ID auth error');
+        setFallback('D-ID client key is domain ke liye authorized nahi hai. D-ID Studio mein aitzaz-ai.vercel.app ko Allowed Domains mein add karein.');
+      } else if (c.includes('NETWORK')) {
+        setStatus('D-ID network error');
+        setFallback('D-ID network connection nahi ban saki. Reconnect karein.');
+      } else {
+        setStatus(code ? `D-ID error: ${code}` : 'D-ID error');
+        setFallback('D-ID avatar load nahi ho saka. Reconnect karein.');
+      }
       if (mic) mic.disabled = true;
     });
 
     api.events.on('agentActivity', ({ state }) => {
-      if (state === 'TALKING') setStatus('SARA speaking', true);
-      else if (state === 'LOADING') setStatus('SARA thinking…', true);
-      else if (state === 'IDLE') setStatus('SARA online', true);
+      const s = String(state || '').toUpperCase();
+      if (s === 'TALKING') setStatus('SARA speaking', true);
+      else if (s === 'LOADING') setStatus('SARA thinking…', true);
+      else if (s === 'IDLE') setStatus('SARA online', true);
     });
   });
 })();
