@@ -7,82 +7,66 @@
   const save=x=>{try{localStorage.setItem(MEMORY_KEY,JSON.stringify(x.slice(-MAX)))}catch{}};
   let memory=load();
   let mode=localStorage.getItem(VOICE_KEY)||'urdu-hindi';
+  let initialized=false;
 
+  function updateCount(){const c=document.getElementById('memoryCount');if(c)c.textContent=String(memory.length*2)}
   function addMemory(q,a){
-    if(!q||!a)return;
-    memory.push({q:String(q).slice(0,1000),a:String(a).slice(0,1800),t:Date.now()});
-    save(memory);
-    const c=document.getElementById('memoryCount');if(c)c.textContent=String(memory.length*2);
+    q=String(q||'').trim();a=String(a||'').trim();if(!q||!a)return;
+    memory.push({q:q.slice(0,1000),a:a.slice(0,1800),t:Date.now()});
+    save(memory);updateCount();
   }
-  function context(){
-    return memory.slice(-12).map(x=>`User: ${x.q}\nSARA: ${x.a}`).join('\n---\n').slice(-10000);
-  }
+  function context(){return memory.slice(-12).map(x=>`User: ${x.q}\nSARA: ${x.a}`).join('\n---\n').slice(-10000)}
 
-  // Keep every question/answer in browser storage and feed recent memory back to SARA.
   const originalFetch=window.fetch.bind(window);
   window.fetch=async function(input,init={}){
     const url=typeof input==='string'?input:(input?.url||'');
-    if(/\/api\/chat(?:\?|$)/.test(url) && init?.body){
+    if(/\/api\/chat(?:\?|$)/.test(url)&&init?.body){
       try{
-        const body=JSON.parse(init.body);
-        const q=String(body.message||'').trim();
-        const mem=context();
-        if(q&&mem){
-          body.message=`[SARA MEMORY — use this context naturally; do not mention this memory block unless asked]\n${mem}\n---\nCURRENT USER QUESTION:\n${q}`;
-        }
-        init={...init,body:JSON.stringify(body)};
-        const response=await originalFetch(input,init);
-        try{const clone=response.clone();const data=await clone.json();if(response.ok&&data.answer)addMemory(q,data.answer)}catch{}
+        const body=JSON.parse(init.body);const q=String(body.message||'').trim();const mem=context();
+        if(q&&mem)body.message=`[SARA MEMORY — use naturally; do not mention this block unless asked]\n${mem}\n---\nCURRENT USER QUESTION:\n${q}`;
+        const response=await originalFetch(input,{...init,body:JSON.stringify(body)});
+        try{const data=await response.clone().json();if(response.ok&&data.answer)addMemory(q,data.answer)}catch{}
         return response;
       }catch{}
     }
     return originalFetch(input,init);
   };
 
+  function voices(){return window.speechSynthesis?.getVoices?.()||[]}
   function pickVoice(text){
-    if(!window.speechSynthesis)return null;
-    const voices=window.speechSynthesis.getVoices();
-    if(!voices.length)return null;
-    const lower=String(text||'').toLowerCase();
-    const wantUrdu=mode==='urdu'||(mode==='urdu-hindi'&&(/[\u0600-\u06ff]/.test(lower)||/\b(ao|assalam|hai|hain|aap|tum|kya|mujhe|apka|mera|mein|kar|karo|hoon|kaise)\b/.test(lower)));
-    const lang=wantUrdu?'ur':'hi';
-    const exact=voices.find(v=>v.lang?.toLowerCase().startsWith(lang));
-    if(exact)return exact;
-    const broad=voices.find(v=>/urdu|hindi|india|pakistan/i.test(v.name||'') && (v.lang||'').toLowerCase().startsWith(lang==='ur'?'ur':'hi'));
-    if(broad)return broad;
-    return voices.find(v=>(v.lang||'').toLowerCase().startsWith('hi'))||voices.find(v=>(v.lang||'').toLowerCase().startsWith('ur'))||null;
+    const vs=voices();if(!vs.length)return null;const s=String(text||'');
+    const urdu=/[\u0600-\u06FF]/.test(s)||/\b(assalam|ao|aap|apka|mera|mujhe|mein|hai|hain|kya|kar|karo|hoon|kaise|acha|achha)\b/i.test(s);
+    const wanted=mode==='urdu'||(mode==='urdu-hindi'&&urdu)?'ur':'hi';
+    return vs.find(v=>String(v.lang||'').toLowerCase()===wanted+'-pk')||vs.find(v=>String(v.lang||'').toLowerCase().startsWith(wanted+'-'))||vs.find(v=>new RegExp(wanted==='ur'?'urdu|pakistan':'hindi|india','i').test(v.name||''))||vs.find(v=>String(v.lang||'').toLowerCase().startsWith('hi-'))||vs.find(v=>String(v.lang||'').toLowerCase().startsWith('en-'))||vs[0];
   }
-
-  if(window.speechSynthesis){
-    const originalSpeak=window.speechSynthesis.speak.bind(window.speechSynthesis);
-    window.speechSynthesis.speak=function(u){
-      try{
-        const v=pickVoice(u.text);
-        if(v)u.voice=v;
-        if(mode==='urdu')u.lang='ur-PK';
-        else if(mode==='hindi')u.lang='hi-IN';
-        else u.lang=v?.lang || (/[\u0600-\u06ff]/.test(u.text)?'ur-PK':'hi-IN');
-        u.rate=.94;u.pitch=1.06;
-      }catch{}
-      return originalSpeak(u);
-    };
+  function patchSpeech(){
+    if(!window.speechSynthesis||window.speechSynthesis.__saraPatched)return;
+    const synth=window.speechSynthesis,original=synth.speak.bind(synth);
+    synth.speak=function(u){try{const v=pickVoice(u?.text);if(v){u.voice=v;u.lang=mode==='urdu'?'ur-PK':mode==='hindi'?'hi-IN':v.lang||'hi-IN'}u.rate=.94;u.pitch=1.06}catch{}return original(u)};
+    synth.__saraPatched=true;
+    synth.addEventListener?.('voiceschanged',()=>buildVoiceUI());
   }
-
   function buildVoiceUI(){
-    const bar=document.querySelector('.voicebar');if(!bar||document.getElementById('saraVoiceMode'))return;
-    const label=document.createElement('label');label.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px';label.innerHTML='🌐 <span>Accent</span>';
-    const select=document.createElement('select');select.id='saraVoiceMode';select.style.cssText='padding:7px 9px;border-radius:9px;background:rgba(255,255,255,.06);color:inherit;border:1px solid rgba(255,255,255,.12)';
-    [['urdu-hindi','Urdu + Hindi (Auto)'],['urdu','Urdu · Pakistan'],['hindi','Hindi · India']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;select.appendChild(o)});
-    select.value=mode;select.onchange=()=>{mode=select.value;localStorage.setItem(VOICE_KEY,mode)};label.appendChild(select);bar.appendChild(label);
+    const bar=document.querySelector('.voicebar');if(!bar)return;
+    let select=document.getElementById('saraVoiceMode');
+    if(!select){
+      const label=document.createElement('label');label.id='saraVoiceLabel';label.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px';label.innerHTML='🌐 <span>Accent</span>';
+      select=document.createElement('select');select.id='saraVoiceMode';select.style.cssText='padding:7px 9px;border-radius:9px;background:#111522;color:inherit;border:1px solid rgba(255,255,255,.18)';
+      [['urdu-hindi','Urdu + Hindi (Auto)'],['urdu','Urdu · Pakistan'],['hindi','Hindi · India']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;select.appendChild(o)});
+      select.onchange=()=>{mode=select.value;localStorage.setItem(VOICE_KEY,mode);try{speechSynthesis.cancel()}catch{} };
+      label.appendChild(select);bar.appendChild(label);
+    }
+    select.value=mode;
   }
   function restore(){
-    const box=document.getElementById('messages');if(!box)return;
-    if(box.children.length)return;
-    memory.slice(-20).forEach(x=>{if(typeof window.addMsg==='function'){window.addMsg('you',x.q);window.addMsg('sara',x.a)}});
-    const c=document.getElementById('memoryCount');if(c)c.textContent=String(memory.length*2);
+    const box=document.getElementById('messages');if(!box||box.children.length||typeof window.addMsg!=='function')return false;
+    memory.slice(-20).forEach(x=>{window.addMsg('you',x.q);window.addMsg('sara',x.a)});updateCount();return true;
   }
-  function clear(){memory=[];save(memory);const c=document.getElementById('memoryCount');if(c)c.textContent='0'}
-  window.SARA_MEMORY={get:()=>memory.slice(),clear,add:addMemory};
-  setTimeout(()=>{buildVoiceUI();restore()},700);
-  window.addEventListener('load',()=>setTimeout(()=>{buildVoiceUI();restore()},400));
+  function clear(){memory=[];save(memory);updateCount()}
+  function init(){
+    if(initialized)return;initialized=true;patchSpeech();buildVoiceUI();updateCount();
+    let tries=0;const timer=setInterval(()=>{buildVoiceUI();restore();if(++tries>20)clearInterval(timer)},250);
+  }
+  window.SARA_MEMORY={get:()=>memory.slice(),clear,add:addMemory,init};
+  init();
 })();
