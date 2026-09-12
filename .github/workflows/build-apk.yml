@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -33,9 +33,23 @@ jobs:
         working-directory: android
         run: gradle :app:assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: SARA-Android-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Publish GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: sara-v1.0.${{ github.run_number }}
+          name: SARA Android v1.0.${{ github.run_number }}
+          body: |
+            SARA Android APK — ready to install.
+            
+            Download `SARA-Android.apk` below and install it on your Android phone.
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
