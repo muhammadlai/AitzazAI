@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SARA — Real D-ID Avatar Test</title>
+<title>SARA — Real D-ID Avatar</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#080811;color:#f7f7fb;font-family:system-ui,-apple-system,sans-serif}.wrap{max-width:1200px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.brand{font-size:30px;font-weight:900}.brand span{color:#f14bb6}.pill{padding:8px 12px;border:1px solid #34344b;border-radius:999px;color:#9b9bb3;font-size:12px}.card{background:#121221;border:1px solid #303047;border-radius:18px;padding:20px}.agent{height:650px;min-height:500px;border:1px dashed #3a3a55;border-radius:16px;background:#07070d;overflow:hidden}.log{height:150px;overflow:auto;background:#07070d;border:1px solid #29293d;border-radius:12px;padding:12px;margin-top:14px;font:12px monospace;color:#bfc0d0;white-space:pre-wrap}.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}button{border:0;border-radius:11px;padding:12px 16px;background:#27273b;color:white;cursor:pointer;font-weight:700}.primary{background:linear-gradient(135deg,#f14bb6,#8b5cf6)}.ok{color:#35e39a}.bad{color:#ff6b7d}.hint{color:#a6a6bd;font-size:13px;line-height:1.5}@media(max-width:700px){.wrap{padding:12px}.agent{height:600px}}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#080811;color:#f7f7fb;font-family:system-ui,-apple-system,sans-serif}.wrap{max-width:1200px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.brand{font-size:30px;font-weight:900}.brand span{color:#f14bb6}.pill{padding:8px 12px;border:1px solid #34344b;border-radius:999px;color:#9b9bb3;font-size:12px}.card{background:#121221;border:1px solid #303047;border-radius:18px;padding:18px}.agent{height:650px;min-height:500px;border:1px solid #3a3a55;border-radius:16px;background:#07070d;overflow:hidden}.log{height:190px;overflow:auto;background:#07070d;border:1px solid #29293d;border-radius:12px;padding:12px;margin-top:14px;font:12px monospace;color:#c5c6d5;white-space:pre-wrap}.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}button{border:0;border-radius:11px;padding:12px 16px;background:#27273b;color:white;cursor:pointer;font-weight:700}.primary{background:linear-gradient(135deg,#f14bb6,#8b5cf6)}.ok{color:#35e39a}.bad{color:#ff6b7d}.hint{color:#a6a6bd;font-size:13px;line-height:1.5}.diag{margin-top:12px;padding:12px;border-radius:12px;background:#0b0b14;border:1px solid #29293d;font:12px monospace;color:#c5c6d5}.diag b{color:#fff}@media(max-width:700px){.wrap{padding:10px}.agent{height:600px}}
 </style>
 </head>
 <body>
@@ -13,22 +13,57 @@
   <div class="top"><div><div class="brand">S<span>ARA</span></div><div class="hint">Real D-ID video avatar • voice • lip-sync • realtime conversation</div></div><div class="pill" id="status">LOADING D-ID…</div></div>
   <div class="card">
     <h2 style="margin-top:0">SARA Real Avatar</h2>
-    <p class="hint">This page now uses the D-ID Agent Embed directly in full mode. No fake image or mouth overlay.</p>
+    <p class="hint">Real D-ID Agent Embed. No fake image, no mouth overlay. The D-ID service supplies the live video avatar and lip-sync.</p>
     <div id="agent-container" class="agent"></div>
-    <div class="actions"><button class="primary" id="connect">Connect SARA</button><button id="speak">Make SARA speak</button><button id="mic">Allow microphone</button></div>
-    <div class="log" id="log">Starting D-ID…\n</div>
+    <div class="actions"><button class="primary" id="speak">Make SARA speak</button><button id="mic">Allow microphone</button><button id="reload">Reload D-ID</button></div>
+    <div class="diag"><b>Live diagnostic</b><br>Page: <span id="origin"></span><br>Agent: <span id="agentId"></span><br>Client key: <span id="key"></span><br>Connection: <span id="conn">waiting…</span><br>Activity: <span id="activity">waiting…</span></div>
+    <div class="log" id="log">Starting D-ID…
+</div>
   </div>
 </div>
 
 <script>
-const logBox=document.getElementById('log');
-const statusBox=document.getElementById('status');
+const CONFIG={clientKey:'ck_HKSbJtwQnIv6enW8MuCz1',agentId:'v2_agt_UZimmP85'};
+const logBox=document.getElementById('log'),statusBox=document.getElementById('status');
+document.getElementById('origin').textContent=location.origin;
+document.getElementById('agentId').textContent=CONFIG.agentId;
+document.getElementById('key').textContent='…'+CONFIG.clientKey.slice(-8);
 function log(x){logBox.textContent+='['+new Date().toLocaleTimeString()+'] '+x+'\n';logBox.scrollTop=logBox.scrollHeight}
-
+function setStatus(text,ok=false){statusBox.textContent=text;statusBox.className='pill '+(ok?'ok':'bad')}
 window.addEventListener('error',e=>log('Browser error: '+e.message));
+window.addEventListener('unhandledrejection',e=>log('Promise error: '+(e.reason?.message||e.reason||'unknown')));
 
-/* Exact D-ID Studio embed values supplied for this SARA test. */
+function hookAPI(){
+  const api=window.DID_AGENTS_API;
+  if(!api){return false}
+  setStatus('D-ID API READY',true); log('D-ID API loaded.');
+  if(!api.events?.on){log('D-ID events API not exposed.');return true}
+  try{
+    api.events.on('connection',({state})=>{document.getElementById('conn').textContent=state;log('Connection: '+state);if(state==='connected'||state==='completed')setStatus('D-ID CONNECTED',true);if(state==='fail')setStatus('D-ID CONNECTION FAILED')});
+    api.events.on('agentActivity',({state})=>{document.getElementById('activity').textContent=state;log('Activity: '+state)});
+    api.events.on('error',({error})=>{const e=error||{};const detail=JSON.stringify(e);document.getElementById('conn').textContent='ERROR';setStatus('D-ID ERROR');log('D-ID error: '+detail)});
+    log('D-ID event listeners attached.');
+  }catch(e){log('Event setup error: '+e.message)}
+  return true;
+}
+
+let tries=0;const timer=setInterval(()=>{tries++;if(hookAPI()||tries>=150){clearInterval(timer);if(!window.DID_AGENTS_API) {setStatus('D-ID SCRIPT/API FAILED');log('D-ID API did not appear after 30 seconds. Check browser console and client-key domain settings.')}}},200);
+window.addEventListener('load',()=>setTimeout(()=>{if(window.DID_AGENTS_API)hookAPI();},300));
+
+document.getElementById('speak').onclick=async()=>{
+  const api=window.DID_AGENTS_API;
+  if(!api?.functions?.speak){log('Speak is not ready. Wait for D-ID to connect.');return}
+  try{await api.functions.speak({type:'text',input:'Hello! I am Sara. Welcome to my real avatar test. How are you today?'});log('Speech request sent.')}catch(e){log('Speak error: '+(e.message||e))}
+};
+
+document.getElementById('mic').onclick=async()=>{
+  try{await navigator.mediaDevices.getUserMedia({audio:true});log('Microphone permission granted.');const api=window.DID_AGENTS_API;if(api?.functions?.toggleMicState)api.functions.toggleMicState(false)}catch(e){log('Microphone error: '+(e.message||e))}
+};
+
+document.getElementById('reload').onclick=()=>location.reload();
 </script>
+
+<!-- Official D-ID Agent Embed: full mode requires data-target-id. Auto-connect is enabled. -->
 <script type="module"
   src="https://agent.d-id.com/v2/index.js"
   data-mode="full"
@@ -41,42 +76,6 @@ window.addEventListener('error',e=>log('Browser error: '+e.message));
   data-position="right"
   data-open-mode="expanded"
   data-auto-connect="true">
-</script>
-<script>
-function watch(){
-  const api=window.DID_AGENTS_API;
-  if(!api){statusBox.textContent='D-ID NOT READY';statusBox.className='pill bad';return false}
-  statusBox.textContent='D-ID API READY';statusBox.className='pill ok';
-  log('D-ID API detected.');
-  try{
-    if(api.events&&api.events.on){
-      api.events.on('connection',({state})=>{statusBox.textContent='D-ID '+String(state).toUpperCase();log('Connection: '+state);});
-      api.events.on('agentActivity',({state})=>log('Agent activity: '+state));
-      api.events.on('error',({error})=>{log('D-ID error: '+JSON.stringify(error));statusBox.textContent='D-ID ERROR';statusBox.className='pill bad'});
-    }
-  }catch(e){log('Event setup error: '+e.message)}
-  return true;
-}
-let tries=0;const timer=setInterval(()=>{tries++;if(watch()||tries>100)clearInterval(timer)},200);
-
-document.getElementById('connect').onclick=async()=>{
-  const api=window.DID_AGENTS_API;
-  if(!api){log('D-ID API is not loaded. The client key may not allow this GitHub Pages domain.');return}
-  try{
-    if(api.functions.connect) await api.functions.connect();
-    else log('Embed controls loaded; auto-connect is enabled.');
-  }catch(e){log('Connect error: '+e.message)}
-};
-
-document.getElementById('speak').onclick=async()=>{
-  const api=window.DID_AGENTS_API;
-  if(!api?.functions?.speak){log('Speak is not ready yet. Connect SARA first.');return}
-  try{await api.functions.speak({type:'text',input:'Hello! I am Sara. Welcome to my real avatar test. How are you today?'});log('Speech request sent.')}catch(e){log('Speak error: '+e.message)}
-};
-
-document.getElementById('mic').onclick=async()=>{
-  try{await navigator.mediaDevices.getUserMedia({audio:true});log('Microphone permission granted.')}catch(e){log('Microphone error: '+e.message)}
-};
 </script>
 </body>
 </html>
