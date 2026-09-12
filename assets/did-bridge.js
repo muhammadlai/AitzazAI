@@ -37,6 +37,24 @@
       return;
     }
 
+    if (mic) {
+      mic.disabled = false;
+      mic.title = 'Microphone on/off';
+      mic.onclick = async () => {
+        try {
+          await api.functions.toggleMicState();
+          mic.classList.toggle('active');
+          const label = mic.querySelector('span');
+          if (label) label.textContent = mic.classList.contains('active') ? 'Mic On' : 'Mic';
+          setStatus(mic.classList.contains('active') ? 'Mic on — SARA sun rahi hai' : 'SARA online', true);
+        } catch (e) {
+          console.error('[SARA] microphone error', e);
+          setStatus('Mic permission/error');
+          setFallback('Browser microphone permission Allow karein, phir Reconnect dabayein.');
+        }
+      };
+    }
+
     api.events.on('connection', ({ state }) => {
       const s = String(state || '').toLowerCase();
       if (s === 'connected') {
