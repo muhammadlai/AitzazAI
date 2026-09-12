@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: sara-ai
+    runtime: node
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: sara-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_MODEL
+        value: gpt-5.6-luna
+      - key: DID_AGENT_ID
+        value: v2_agt_UZimmP85
+      - key: DID_CLIENT_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TIKTOK_CLIENT_KEY
+        value: awtZ3ix5ohjk2uuz0
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+      - key: TIKTOK_REDIRECT_URI
+        sync: false
+      - key: TIKTOK_SCOPES
+        value: user.info.basic,user.info.profile,user.info.stats,video.list,video.upload
+      - key: TIKTOK_TOKEN_ENCRYPTION_KEY
+        generateValue: true
+      - key: SARA_CORS_ORIGIN
+        value: https://muhammadlai.github.io
+      - key: DB_PATH
+        value: /var/data/sara.db
