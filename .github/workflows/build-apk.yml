@@ -35,6 +35,10 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Verify Gradle and Android toolchain
+        working-directory: android
+        run: gradle --version
+
       - name: Build debug APK
         working-directory: android
         run: gradle :app:assembleDebug --no-daemon --stacktrace
@@ -52,10 +56,10 @@ jobs:
       - name: Publish GitHub Release with APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: sara-v1.0.${{ github.run_number }}
-          name: SARA Android v1.0.${{ github.run_number }}
+          tag_name: sara-v1.2.${{ github.run_number }}
+          name: SARA Android v1.2.${{ github.run_number }}
           body: |
-            SARA Android APK — ready to install.
+            SARA Android 1.2 — fixed microphone permission startup and D-ID WebView audio handling.
 
             Download SARA-Android.apk below and install it on your Android phone.
           files: SARA-Android.apk
