@@ -89,7 +89,7 @@ function verifyState(value) {
     return Date.now() - Number(data.t) < 10 * 60 * 1000 ? data : null;
   } catch { return null; }
 }
-async function tiktokToken(req) {
+async function tiktokToken(req, res) {
   const saved = tokenFromRequest(req);
   if (!saved) return null;
   if (saved.access_token && Number(saved.expires_at || 0) > Date.now() + 15 * 60 * 1000) return saved.access_token;
@@ -101,6 +101,7 @@ async function tiktokToken(req) {
   saved.access_token = data.access_token;
   saved.refresh_token = data.refresh_token || saved.refresh_token;
   saved.expires_at = Date.now() + Number(data.expires_in || 0) * 1000;
+  setTokenCookie(res, saved);
   return saved.access_token;
 }
 
@@ -110,7 +111,7 @@ export default async function handler(req, res) {
   const url = new URL(req.url || '/', 'https://sara.local');
   const path = url.pathname;
   try {
-    if (path === '/api/health') return json(res, 200, { ok: true, name: 'SARA', version: '3.3-vercel', model: MODEL, openai: Boolean(openai), didAgentId: process.env.DID_AGENT_ID || null, tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: false, backend: 'vercel-serverless' });
+    if (path === '/api/health') return json(res, 200, { ok: true, name: 'SARA', version: '3.4-tiktok', model: MODEL, openai: Boolean(openai), didAgentId: process.env.DID_AGENT_ID || null, tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: false, backend: 'vercel-serverless' });
 
     if (path === '/api/chat' && req.method === 'POST') {
       if (!openai) return json(res, 503, { error: 'OPENAI_API_KEY is not configured on the server.' });
@@ -146,7 +147,8 @@ export default async function handler(req, res) {
     if (path === '/auth/tiktok' && req.method === 'GET') {
       if (!process.env.TIKTOK_CLIENT_KEY || !process.env.TIKTOK_REDIRECT_URI) return res.status(503).send('TikTok OAuth is not configured.');
       const state = signState({ t: Date.now(), n: crypto.randomUUID() });
-      const p = new URLSearchParams({ client_key: process.env.TIKTOK_CLIENT_KEY, response_type: 'code', scope: process.env.TIKTOK_SCOPES || 'user.info.basic,user.info.profile,user.info.stats,video.list,video.upload,video.publish', redirect_uri: process.env.TIKTOK_REDIRECT_URI, state });
+      const defaultScopes = 'user.info.basic,video.list,video.upload,video.publish';
+      const p = new URLSearchParams({ client_key: process.env.TIKTOK_CLIENT_KEY, response_type: 'code', scope: process.env.TIKTOK_SCOPES || defaultScopes, redirect_uri: process.env.TIKTOK_REDIRECT_URI, state });
       return res.redirect('https://www.tiktok.com/v2/auth/authorize/?' + p.toString());
     }
     if (path === '/auth/tiktok/callback' && req.method === 'GET') {
@@ -165,14 +167,14 @@ export default async function handler(req, res) {
       return json(res, 200, { connected: Boolean(t?.access_token), openId: t?.open_id || null, scope: t?.scope || null, expiresAt: t?.expires_at || null });
     }
     if (path === '/api/tiktok/profile' && req.method === 'GET') {
-      const token = await tiktokToken(req);
+      const token = await tiktokToken(req, res);
       if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
       const fields = 'open_id,display_name,username,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count';
       const r = await fetch(`https://open.tiktokapis.com/v2/user/info/?fields=${fields}`, { headers: { Authorization: `Bearer ${token}` } });
       return json(res, r.ok ? 200 : 502, await r.json());
     }
     if (path === '/api/tiktok/videos' && req.method === 'GET') {
-      const token = await tiktokToken(req);
+      const token = await tiktokToken(req, res);
       if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
       const fields = 'id,create_time,cover_image_url,share_url,video_description,duration,title,like_count,comment_count,share_count,view_count,is_aigc';
       const maxCount = Math.min(20, Math.max(1, Number(url.searchParams.get('max_count') || 20)));
@@ -180,18 +182,54 @@ export default async function handler(req, res) {
       return json(res, r.ok ? 200 : 502, await r.json());
     }
     if (path === '/api/tiktok/creator-info' && req.method === 'GET') {
-      const token = await tiktokToken(req);
+      const token = await tiktokToken(req, res);
       if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
       const r = await fetch('https://open.tiktokapis.com/v2/post/publish/creator_info/query/', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}' });
       return json(res, r.ok ? 200 : 502, await r.json());
     }
     if (path === '/api/tiktok/post-url' && req.method === 'POST') {
-      const token = await tiktokToken(req);
+      const token = await tiktokToken(req, res);
       if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
-      const body = req.body || {}, videoUrl = clean(body.videoUrl, 2000), title = clean(body.title, 150);
+      const body = req.body || {}, videoUrl = clean(body.videoUrl, 2000), title = clean(body.title, 2200);
+      if (body.consent !== true) return json(res, 400, { error: 'Explicit user consent is required before sending content to TikTok.' });
       if (!/^https:\/\//i.test(videoUrl)) return json(res, 400, { error: 'videoUrl must be HTTPS.' });
-      const payload = { post_info: { title, privacy_level: clean(body.privacyLevel || 'SELF_ONLY', 40), disable_duet: Boolean(body.disableDuet), disable_comment: Boolean(body.disableComment), disable_stitch: Boolean(body.disableStitch) }, source_info: { source: 'PULL_FROM_URL', video_url: videoUrl } };
+      const infoRes = await fetch('https://open.tiktokapis.com/v2/post/publish/creator_info/query/', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}' });
+      const info = await infoRes.json();
+      if (!infoRes.ok) return json(res, 502, info);
+      const options = info?.data?.privacy_level_options || ['SELF_ONLY'];
+      const privacy = clean(body.privacyLevel || 'SELF_ONLY', 40);
+      if (!options.includes(privacy)) return json(res, 400, { error: `privacyLevel ${privacy} is not available for this TikTok account.`, privacyLevelOptions: options });
+      const payload = { post_info: { title, privacy_level: privacy, disable_duet: Boolean(body.disableDuet), disable_comment: Boolean(body.disableComment), disable_stitch: Boolean(body.disableStitch) }, source_info: { source: 'PULL_FROM_URL', video_url: videoUrl } };
       const r = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=UTF-8' }, body: JSON.stringify(payload) });
+      return json(res, r.ok ? 200 : 502, await r.json());
+    }
+    if (path === '/api/tiktok/init-upload' && req.method === 'POST') {
+      const token = await tiktokToken(req, res);
+      if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
+      const body = req.body || {};
+      if (body.consent !== true) return json(res, 400, { error: 'Explicit user consent is required before sending content to TikTok.' });
+      const videoSize = Number(body.videoSize || 0);
+      if (!Number.isFinite(videoSize) || videoSize <= 0 || videoSize > 4 * 1024 * 1024 * 1024) return json(res, 400, { error: 'Video size must be greater than 0 and no more than 4GB.' });
+      const chunkSize = Math.min(64 * 1024 * 1024, Math.max(5 * 1024 * 1024, Number(body.chunkSize || 10 * 1024 * 1024)));
+      const totalChunkCount = Math.ceil(videoSize / chunkSize);
+      if (totalChunkCount > 1000) return json(res, 400, { error: 'Too many upload chunks.' });
+      const infoRes = await fetch('https://open.tiktokapis.com/v2/post/publish/creator_info/query/', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}' });
+      const info = await infoRes.json();
+      if (!infoRes.ok) return json(res, 502, info);
+      const options = info?.data?.privacy_level_options || ['SELF_ONLY'];
+      const privacy = clean(body.privacyLevel || 'SELF_ONLY', 40);
+      if (!options.includes(privacy)) return json(res, 400, { error: `privacyLevel ${privacy} is not available for this TikTok account.`, privacyLevelOptions: options });
+      const title = clean(body.title, 2200);
+      const payload = { post_info: { title, privacy_level: privacy, disable_duet: Boolean(body.disableDuet), disable_comment: Boolean(body.disableComment), disable_stitch: Boolean(body.disableStitch) }, source_info: { source: 'FILE_UPLOAD', video_size: videoSize, chunk_size: chunkSize, total_chunk_count: totalChunkCount } };
+      const r = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=UTF-8' }, body: JSON.stringify(payload) });
+      return json(res, r.ok ? 200 : 502, await r.json());
+    }
+    if (path === '/api/tiktok/publish-status' && req.method === 'GET') {
+      const token = await tiktokToken(req, res);
+      if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
+      const publishId = clean(url.searchParams.get('publish_id'), 100);
+      if (!publishId) return json(res, 400, { error: 'publish_id required' });
+      const r = await fetch(`https://open.tiktokapis.com/v2/post/publish/status/fetch/`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ publish_id: publishId }) });
       return json(res, r.ok ? 200 : 502, await r.json());
     }
 
