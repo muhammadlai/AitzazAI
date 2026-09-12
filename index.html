@@ -1,10 +1,12 @@
 <!doctype html>
 <html lang="ur">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Permissions-Policy" content="microphone=(self), autoplay=(self)">
 <title>SARA — AI Creator</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#050509;color:#fff;font-family:system-ui,-apple-system,"Noto Sans Devanagari",sans-serif}body{overflow:hidden}.app{width:100%;height:100dvh;position:relative;background:#000}.top{position:absolute;z-index:50;left:16px;right:16px;top:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.brand{font-weight:900;font-size:22px;text-shadow:0 2px 16px #000}.tag{font-size:12px;color:#eee;background:#111c;padding:8px 12px;border-radius:999px;backdrop-filter:blur(10px)}.status{position:absolute;z-index:50;top:52px;left:16px;padding:8px 12px;border-radius:10px;background:#090914d9;color:#bbb;font-size:12px;backdrop-filter:blur(10px)}.ok{color:#47e2a0}.bad{color:#ff7182}.stage{position:absolute;inset:0;width:100%;height:100%;background:#000;overflow:hidden}.stage>*{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}.stage:empty:before{content:'SARA connect ho rahi hai…';position:absolute;inset:0;display:grid;place-items:center;color:#aaa;font-size:18px}.controls{position:absolute;z-index:60;left:16px;right:16px;bottom:16px;display:flex;justify-content:center;gap:8px;pointer-events:none}.btn{pointer-events:auto;border:0;border-radius:999px;padding:12px 17px;background:#fff;color:#111;font-weight:800;cursor:pointer;box-shadow:0 8px 28px #0009}.btn.green{background:#39df9a}.btn.red{background:#ff6578;color:#fff}.btn.dark{background:#15151f;color:#fff;border:1px solid #383847}.panel{position:absolute;z-index:70;right:16px;top:88px;width:min(350px,calc(100% - 32px));background:#0d0d16ed;border:1px solid #30303f;border-radius:18px;padding:16px;display:none;backdrop-filter:blur(16px);box-shadow:0 18px 60px #000b}.panel.show{display:block}.panel h3{margin:0 0 12px}.panel p{font-size:12px;color:#aaa;line-height:1.45}.row{display:flex;gap:8px}.input{width:100%;background:#171722;border:1px solid #39394a;color:#fff;border-radius:10px;padding:11px}.mini{font-size:11px;color:#888;margin-top:8px}.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#191927;margin:2px;font-size:11px}.help{position:absolute;z-index:55;left:50%;bottom:68px;transform:translateX(-50%);font-size:12px;color:#fff;background:#000b;padding:7px 11px;border-radius:8px;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}.hidden{display:none!important}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#050509;color:#fff;font-family:system-ui,-apple-system,"Noto Sans Devanagari",sans-serif}body{overflow:hidden}.app{width:100%;height:100dvh;position:relative;background:#000}.top{position:absolute;z-index:50;left:16px;right:16px;top:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.brand{font-weight:900;font-size:22px;text-shadow:0 2px 16px #000}.tag{font-size:12px;color:#eee;background:#111c;padding:8px 12px;border-radius:999px;backdrop-filter:blur(10px)}.status{position:absolute;z-index:50;top:52px;left:16px;padding:8px 12px;border-radius:10px;background:#090914d9;color:#bbb;font-size:12px;backdrop-filter:blur(10px)}.ok{color:#47e2a0}.bad{color:#ff7182}.stage{position:absolute;inset:0;width:100%;height:100%;background:#000;overflow:hidden}.stage>*{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}.stage:empty:before{content:'SARA connect ho rahi hai…';position:absolute;inset:0;display:grid;place-items:center;color:#aaa;font-size:18px}.controls{position:absolute;z-index:60;left:16px;right:16px;bottom:16px;display:flex;justify-content:center;gap:8px;pointer-events:none}.btn{pointer-events:auto;border:0;border-radius:999px;padding:12px 17px;background:#fff;color:#111;font-weight:800;cursor:pointer;box-shadow:0 8px 28px #0009}.btn.green{background:#39df9a}.btn.red{background:#ff6578;color:#fff}.btn.dark{background:#15151f;color:#fff;border:1px solid #383847}.btn:disabled{opacity:.65}.panel{position:absolute;z-index:70;right:16px;top:88px;width:min(350px,calc(100% - 32px));background:#0d0d16ed;border:1px solid #30303f;border-radius:18px;padding:16px;display:none;backdrop-filter:blur(16px);box-shadow:0 18px 60px #000b}.panel.show{display:block}.panel h3{margin:0 0 12px}.panel p{font-size:12px;color:#aaa;line-height:1.45}.row{display:flex;gap:8px}.mini{font-size:11px;color:#888;margin-top:8px}.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#191927;margin:2px;font-size:11px}.help{position:absolute;z-index:55;left:50%;bottom:68px;transform:translateX(-50%);font-size:12px;color:#fff;background:#000b;padding:7px 11px;border-radius:8px;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -12,34 +14,58 @@
 <div class="top"><div class="brand">SARA</div><div class="tag">اردو • हिंदी • AI Creator</div></div>
 <div id="status" class="status">SARA connect ho rahi hai…</div>
 <div id="sara-agent" class="stage"></div>
-<div id="help" class="help">Mic ON karein, phir normal Urdu/Hindi mein baat karein</div>
+<div id="help" class="help">SARA microphone initialize kar rahi hai…</div>
 <div class="controls"><button id="mic" class="btn green">🎙️ Mic ON</button><button id="tik" class="btn dark">🎵 TikTok</button><button id="more" class="btn dark">⚙️ Control</button></div>
-<div id="panel" class="panel">
-<h3>🎵 TikTok Creator</h3>
-<p id="ttState">TikTok backend status check ho raha hai…</p>
-<div class="row"><button id="connect" class="btn green" style="flex:1">Connect TikTok</button><button id="close" class="btn dark">×</button></div>
-<div id="stats" class="mini"></div>
-<div class="mini">Connect ke baad SARA profile, handle, stats, videos aur supported posting controls use kar sakti hai.</div>
-<hr style="border:0;border-top:1px solid #292936;margin:14px 0">
-<p><b>Video tools</b><br><span class="pill">Caption + hashtags</span><span class="pill">Draft upload</span><span class="pill">Direct Post</span></p>
-<p>Direct Post ke liye TikTok ka <b>video.publish</b> approval zaroori hai. TikTok LIVE broadcast alag TikTok-supported streaming access maangta hai.</p>
-</div>
-<div id="control" class="panel"><h3>⚙️ SARA Controls</h3><button id="speak" class="btn green" style="width:100%;margin-bottom:8px">👋 SARA ka intro sunao</button><button id="fs" class="btn dark" style="width:100%">⛶ Fullscreen</button><p>Mic permission browser/Android se Allow honi chahiye. Agar mic band ho, button dobara dabayein.</p></div>
+<div id="panel" class="panel"><h3>🎵 TikTok Creator</h3><p id="ttState">TikTok backend status check ho raha hai…</p><div class="row"><button id="connect" class="btn green" style="flex:1">Connect TikTok</button><button id="close" class="btn dark">×</button></div><div id="stats" class="mini"></div><div class="mini">Connect ke baad SARA profile, handle, stats, videos aur supported posting controls use kar sakti hai.</div></div>
+<div id="control" class="panel"><h3>⚙️ SARA Controls</h3><button id="speak" class="btn green" style="width:100%;margin-bottom:8px">👋 SARA ka intro sunao</button><button id="fs" class="btn dark" style="width:100%;margin-bottom:8px">⛶ Fullscreen</button><button id="micTest" class="btn dark" style="width:100%">🎙️ Mic test / reconnect</button><p>App microphone ko auto initialize karti hai. Pehli dafa Android/browser ko microphone permission deni hoti hai.</p></div>
 </div>
 <script type="module" src="https://agent.d-id.com/v2/index.js" data-mode="full" data-target-id="sara-agent" data-client-key="ck_HKSbJtwQnIv6enW8MuCz1" data-agent-id="v2_agt_UZimmP85" data-name="did-agent" data-monitor="true" data-orientation="vertical" data-open-mode="expanded" data-auto-connect="true" data-speech-silence-timeout-ms="1500"></script>
-<script>
-const $=id=>document.getElementById(id),s=$('status'),mic=$('mic'),help=$('help'),panel=$('panel'),control=$('control');let api=null,backend=localStorage.getItem('SARA_API_BASE')||'';
-function setStatus(t,ok=true){s.textContent=t;s.className='status '+(ok?'ok':'bad')}
-function setup(){api=window.DID_AGENTS_API;if(!api)return false;try{api.configure({orientation:'vertical',openMode:'expanded',showMicToggle:true,showChatToggle:true,showRestartButton:true,autoConnect:true});}catch(e){}return true}
-const timer=setInterval(()=>{if(setup()){clearInterval(timer);setStatus('SARA ready — Mic ON karke baat karein');try{api.functions.speak({type:'text',input:'Assalam o alaikum! Main SARA hoon, Aitzaz ki personal AI creator agent. Aap mujhse Urdu, Hindi ya simple English mein naturally baat kar sakte hain. Main conversation, content ideas, captions, hashtags aur TikTok creator tasks mein help kar sakti hoon.'})}catch(e){} }},250);
-async function micOn(){if(!api)setup();if(!api){setStatus('D-ID abhi load nahi hua',false);return}mic.disabled=true;mic.textContent='🎙️ Mic check…';try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('Microphone API unavailable');const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});st.getTracks().forEach(t=>t.stop());await api.functions.toggleMicState(false);mic.className='btn green';mic.textContent='🎙️ Mic ON';help.textContent='SARA sun rahi hai — normal Urdu/Hindi mein boliye';setStatus('Mic ON — SARA sun rahi hai');}catch(e){mic.className='btn red';mic.textContent='🎙️ Mic permission';help.textContent='Microphone permission mein Allow karein, phir dobara dabayein';setStatus('Mic start nahi hua: '+(e.message||e),false)}finally{mic.disabled=false}}
-mic.onclick=micOn;
-$('tik').onclick=()=>{panel.classList.toggle('show');control.classList.remove('show');checkTikTok()};$('more').onclick=()=>{control.classList.toggle('show');panel.classList.remove('show')};$('close').onclick=()=>panel.classList.remove('show');
-$('speak').onclick=async()=>{setup();if(api)try{await api.functions.speak({type:'text',input:'Main SARA hoon. Aap jo poochna chahein pooch sakte hain — Urdu, Hindi ya English mein. Main aapko natural conversation ke saath content, TikTok aur creator work mein help karungi.'})}catch(e){setStatus('SARA speech error: '+e.message,false)}};
-$('fs').onclick=()=>{setup();try{api?.functions?.requestFullscreen(true)}catch(e){document.documentElement.requestFullscreen?.()}};
-async function checkTikTok(){if(!backend){$('ttState').textContent='GitHub Pages par backend configured nahi hai. TikTok OAuth ke liye secure server URL set karna hoga.';$('connect').textContent='Backend required';$('connect').disabled=true;return}try{const r=await fetch(backend+'/api/tiktok/status');const d=await r.json();$('ttState').textContent=d.connected?'✅ TikTok connected':'🔗 TikTok ready — account connect karein';$('connect').disabled=false;$('connect').textContent=d.connected?'TikTok Connected':'Connect TikTok';if(d.connected){const p=await fetch(backend+'/api/tiktok/profile');const j=await p.json();const x=j.data||{};$('stats').textContent=`@${x.display_name||'TikTok'} • ${x.follower_count??0} followers • ${x.video_count??0} videos • ${x.likes_count??0} likes`}}catch(e){$('ttState').textContent='TikTok server unavailable: '+e.message}}
+<script type="module">
+import { SaraMicManager } from './mic/mic-manager.js';
+
+const $=id=>document.getElementById(id);
+const statusEl=$('status'), micBtn=$('mic'), help=$('help'), panel=$('panel'), control=$('control');
+let api=null, backend=localStorage.getItem('SARA_API_BASE')||'';
+
+function setStatus(text,ok=true){statusEl.textContent=text;statusEl.className='status '+(ok?'ok':'bad')}
+function getApi(){return window.DID_AGENTS_API||null}
+function setup(){api=getApi();if(!api)return false;try{api.configure({orientation:'vertical',openMode:'expanded',showMicToggle:true,showChatToggle:true,showRestartButton:true,autoConnect:true});}catch(_){}return true}
+
+const micManager=new SaraMicManager({
+  apiGetter:getApi,
+  onState:(text,ok=true)=>{help.textContent=text;setStatus(text,ok);micBtn.className='btn '+(ok?'green':'red');micBtn.textContent=ok?'🎙️ Mic ON':'🎙️ Mic permission';},
+  onError:(message)=>console.warn('SARA mic:',message)
+});
+
+async function waitForAgent(){
+  for(let i=0;i<80;i++){
+    if(setup()){
+      setStatus('SARA connected — microphone initialize ho rahi hai');
+      try{await api.functions.speak({type:'text',input:'Assalam o alaikum! Main SARA hoon, Aitzaz ki personal AI creator agent. Main Urdu, Hindi aur simple English mein naturally baat karti hoon. Aap boliye, main sunti hoon.'})}catch(_){}
+      // Start microphone automatically. If browser requires a gesture, the manager retries on first touch.
+      setTimeout(()=>micManager.autoStart(),350);
+      return;
+    }
+    await new Promise(r=>setTimeout(r,250));
+  }
+  setStatus('D-ID load nahi hua — page refresh karein',false);
+}
+waitForAgent();
+
+micBtn.onclick=()=>micManager.enable();
+$('micTest').onclick=()=>micManager.enable();
+$('tik').onclick=()=>{panel.classList.toggle('show');control.classList.remove('show');checkTikTok()};
+$('more').onclick=()=>{control.classList.toggle('show');panel.classList.remove('show')};
+$('close').onclick=()=>panel.classList.remove('show');
+$('speak').onclick=async()=>{setup();try{await api?.functions?.speak({type:'text',input:'Main SARA hoon. Aap jo poochna chahein pooch sakte hain — Urdu, Hindi ya English mein. Main natural conversation aur creator work mein help karungi.'})}catch(e){setStatus('SARA speech error: '+e.message,false)}};
+$('fs').onclick=()=>{setup();try{api?.functions?.requestFullscreen(true)}catch(_){document.documentElement.requestFullscreen?.()}};
+
+async function checkTikTok(){
+  if(!backend){$('ttState').textContent='GitHub Pages par backend configured nahi hai. TikTok OAuth ke liye secure server URL set karna hoga.';$('connect').disabled=true;return}
+  try{const r=await fetch(backend+'/api/tiktok/status');const d=await r.json();$('ttState').textContent=d.connected?'✅ TikTok connected':'🔗 TikTok ready — account connect karein';$('connect').disabled=false;$('connect').textContent=d.connected?'TikTok Connected':'Connect TikTok';if(d.connected){const p=await fetch(backend+'/api/tiktok/profile');const j=await p.json();const x=j.data||{};$('stats').textContent=`@${x.display_name||'TikTok'} • ${x.follower_count??0} followers • ${x.video_count??0} videos • ${x.likes_count??0} likes`}}catch(e){$('ttState').textContent='TikTok server unavailable: '+e.message}}
 $('connect').onclick=()=>{if(backend)location.href=backend+'/auth/tiktok'};
-window.addEventListener('error',e=>{if(e?.message)setStatus('D-ID error: '+e.message,false)});
-if(new URLSearchParams(location.search).get('tiktok')==='connected'){panel.classList.add('show');checkTikTok()}
+window.addEventListener('error',e=>{if(e?.message)console.warn('SARA page error:',e.message)});
+window.addEventListener('beforeunload',()=>micManager.destroy());
 </script>
-</body></html>
+</body>
+</html>
