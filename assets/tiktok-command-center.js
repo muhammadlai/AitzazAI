@@ -3,7 +3,22 @@
   const $ = id => document.getElementById(id);
   const base = () => (window.SARA_API_BASE || localStorage.getItem('sara_api_base') || location.origin).replace(/\/$/, '');
   const api = (p, o = {}) => fetch(base() + p, o);
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = s => String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+
+  function showTab(tabName) {
+    const tabs = document.querySelectorAll('.tab-panel');
+    const navs = document.querySelectorAll('.nav');
+    const target = $('tab-' + tabName);
+    if (!target) return false;
+    navs.forEach(x => x.classList.toggle('active', x.dataset.tab === tabName));
+    tabs.forEach(x => x.classList.add('hidden'));
+    target.classList.remove('hidden');
+    if (tabName === 'tiktok') {
+      loadTikTok();
+      setTimeout(refresh, 100);
+    }
+    return true;
+  }
 
   function inject() {
     const tab = $('tab-tiktok');
@@ -54,5 +69,12 @@
   }
 
   inject();
+  document.addEventListener('click', e => {
+    const btn = e.target.closest?.('.nav[data-tab="tiktok"]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    showTab('tiktok');
+  }, true);
   document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.tab==='tiktok'){setTimeout(refresh,80);}}));
 })();
