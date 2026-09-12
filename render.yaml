@@ -3,7 +3,7 @@ services:
     name: sara-ai
     runtime: node
     plan: starter
-    buildCommand: npm ci
+    buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
     disk:
@@ -28,7 +28,7 @@ services:
       - key: TIKTOK_REDIRECT_URI
         sync: false
       - key: TIKTOK_SCOPES
-        value: user.info.basic,user.info.profile,user.info.stats,video.list,video.upload
+        value: user.info.basic,user.info.profile,user.info.stats,video.list,video.upload,video.publish
       - key: TIKTOK_TOKEN_ENCRYPTION_KEY
         generateValue: true
       - key: SARA_CORS_ORIGIN
