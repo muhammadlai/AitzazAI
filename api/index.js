@@ -80,7 +80,7 @@ export default async function handler(req, res) {
   const url = new URL(req.url || '/', 'https://sara.local');
   const path = url.pathname;
   try {
-    if (path === '/api/health') return json(res, 200, { ok: true, name: 'SARA', version: '3.1-vercel', model: MODEL, openai: Boolean(openai), didAgentId: process.env.DID_AGENT_ID || null, tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: false, backend: 'vercel-serverless' });
+    if (path === '/api/health') return json(res, 200, { ok: true, name: 'SARA', version: '3.2-vercel', model: MODEL, openai: Boolean(openai), didAgentId: process.env.DID_AGENT_ID || null, tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: false, backend: 'vercel-serverless' });
 
     if (path === '/api/chat' && req.method === 'POST') {
       if (!openai) return json(res, 503, { error: 'OPENAI_API_KEY is not configured on the server.' });
@@ -133,6 +133,21 @@ export default async function handler(req, res) {
     if (path === '/api/tiktok/status' && req.method === 'GET') {
       const t = tokenFromRequest(req);
       return json(res, 200, { connected: Boolean(t?.access_token), openId: t?.open_id || null, scope: t?.scope || null, expiresAt: t?.expires_at || null });
+    }
+    if (path === '/api/tiktok/profile' && req.method === 'GET') {
+      const token = await tiktokToken(req);
+      if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
+      const fields = 'open_id,display_name,username,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count';
+      const r = await fetch(`https://open.tiktokapis.com/v2/user/info/?fields=${fields}`, { headers: { Authorization: `Bearer ${token}` } });
+      return json(res, r.ok ? 200 : 502, await r.json());
+    }
+    if (path === '/api/tiktok/videos' && req.method === 'GET') {
+      const token = await tiktokToken(req);
+      if (!token) return json(res, 401, { error: 'TikTok is not connected or the token could not be refreshed.' });
+      const fields = 'id,create_time,cover_image_url,share_url,video_description,duration,title,like_count,comment_count,share_count,view_count,is_aigc';
+      const maxCount = Math.min(20, Math.max(1, Number(url.searchParams.get('max_count') || 20)));
+      const r = await fetch(`https://open.tiktokapis.com/v2/video/list/?fields=${fields}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ max_count: maxCount }) });
+      return json(res, r.ok ? 200 : 502, await r.json());
     }
     if (path === '/api/tiktok/creator-info' && req.method === 'GET') {
       const token = await tiktokToken(req);
