@@ -10,49 +10,35 @@
     status.textContent = text;
     status.className = 'status ' + (online ? 'online' : 'offline');
   };
-
   const setFallback = (text, showRetry = true) => {
     if (fallbackText) fallbackText.textContent = text;
     if (retry) retry.style.display = showRetry ? '' : 'none';
   };
-
   const waitForApi = (timeout = 15000) => new Promise(resolve => {
     if (window.DID_AGENTS_API) return resolve(window.DID_AGENTS_API);
     const started = Date.now();
     const timer = setInterval(() => {
-      if (window.DID_AGENTS_API) {
-        clearInterval(timer);
-        resolve(window.DID_AGENTS_API);
-      } else if (Date.now() - started >= timeout) {
-        clearInterval(timer);
-        resolve(null);
-      }
+      if (window.DID_AGENTS_API) { clearInterval(timer); resolve(window.DID_AGENTS_API); }
+      else if (Date.now() - started >= timeout) { clearInterval(timer); resolve(null); }
     }, 100);
   });
 
+  if (mic) {
+    // Browser SpeechRecognition fallback is owned by index.html and remains usable
+    // even when D-ID authentication/domain authorization fails.
+    mic.disabled = false;
+  }
+
   waitForApi().then(api => {
     if (!api) {
-      setStatus('D-ID API not loaded');
-      setFallback('D-ID embed load nahi hua. Reconnect try karein.');
+      setStatus('D-ID unavailable · Voice fallback ready');
+      setFallback('D-ID avatar connect nahi hua. Browser Mic + Voice fallback ready hai.');
       return;
     }
 
     if (mic) {
       mic.disabled = false;
-      mic.title = 'Microphone on/off';
-      mic.onclick = async () => {
-        try {
-          await api.functions.toggleMicState();
-          mic.classList.toggle('active');
-          const label = mic.querySelector('span');
-          if (label) label.textContent = mic.classList.contains('active') ? 'Mic On' : 'Mic';
-          setStatus(mic.classList.contains('active') ? 'Mic on — SARA sun rahi hai' : 'SARA online', true);
-        } catch (e) {
-          console.error('[SARA] microphone error', e);
-          setStatus('Mic permission/error');
-          setFallback('Browser microphone permission Allow karein, phir Reconnect dabayein.');
-        }
-      };
+      mic.title = 'D-ID microphone; browser microphone fallback available';
     }
 
     api.events.on('connection', ({ state }) => {
@@ -65,13 +51,13 @@
         setStatus('D-ID connecting…');
         setFallback('SARA se secure connection ban raha hai…');
       } else if (s === 'disconnected' || s === 'closed') {
-        setStatus('D-ID disconnected');
-        setFallback('D-ID connection band ho gaya. Reconnect karein.');
-        if (mic) mic.disabled = true;
+        setStatus('D-ID disconnected · Voice fallback ready');
+        setFallback('D-ID band hai. Browser voice/mic fallback available hai.');
+        if (mic) mic.disabled = false;
       } else if (s === 'fail' || s === 'failed') {
-        setStatus('D-ID unavailable');
-        setFallback('D-ID connection fail hua. Client key/domain settings check karein.');
-        if (mic) mic.disabled = true;
+        setStatus('D-ID unavailable · Voice fallback ready');
+        setFallback('D-ID connection fail hua. Browser voice/mic fallback phir bhi available hai.');
+        if (mic) mic.disabled = false;
       }
     });
 
@@ -80,16 +66,16 @@
       const code = error?.code || error?.type || '';
       const c = String(code).toUpperCase();
       if (c.includes('AUTH')) {
-        setStatus('D-ID auth error');
-        setFallback('D-ID client key is domain ke liye authorized nahi hai. D-ID Studio mein aitzaz-ai.vercel.app ko Allowed Domains mein add karein.');
+        setStatus('D-ID auth error · Voice fallback ready');
+        setFallback('D-ID client key is domain ke liye authorized nahi. Allowed Domains mein aitzaz-ai.vercel.app add karein. Browser voice/mic fallback ready hai.');
       } else if (c.includes('NETWORK')) {
-        setStatus('D-ID network error');
-        setFallback('D-ID network connection nahi ban saki. Reconnect karein.');
+        setStatus('D-ID network error · Voice fallback ready');
+        setFallback('D-ID network connection nahi bani. Browser voice/mic fallback ready hai.');
       } else {
-        setStatus(code ? `D-ID error: ${code}` : 'D-ID error');
-        setFallback('D-ID avatar load nahi ho saka. Reconnect karein.');
+        setStatus(code ? `D-ID error: ${code}` : 'D-ID error · Voice fallback ready');
+        setFallback('D-ID avatar load nahi hua. Browser voice/mic fallback ready hai.');
       }
-      if (mic) mic.disabled = true;
+      if (mic) mic.disabled = false;
     });
 
     api.events.on('agentActivity', ({ state }) => {
