@@ -11,7 +11,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.view.Window
 import android.view.WindowManager
-import androidx.core.app.ActivityCompat
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -27,7 +26,7 @@ class MainActivity : Activity() {
 
         if (android.os.Build.VERSION.SDK_INT >= 23 &&
             checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 1001)
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 1001)
         }
 
         with(webView.settings) {
