@@ -1,1 +1,71 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SARA — Real D-ID Avatar</title><style>body{margin:0;background:#080811;color:#fff;font-family:system-ui,sans-serif}.wrap{max-width:1200px;margin:auto;padding:28px}.card{background:#121221;border:1px solid #303047;border-radius:18px;padding:20px}.hint{color:#aaaabd;line-height:1.5}.status{margin:12px 0;padding:10px;border-radius:10px;background:#1d1d2d}.stage{min-height:680px;border-radius:16px;background:#07070d;position:relative}.ok{color:#39df9a}.bad{color:#ff687c}</style></head><body><div class="wrap"><div class="card"><h1>SARA Real Avatar</h1><p class="hint">Official D-ID Agent Embed • real video avatar • voice • lip-sync • realtime conversation</p><div id="status" class="status">Loading D-ID…</div><div id="sara-agent" class="stage"></div></div></div><script type="module" src="https://agent.d-id.com/v2/index.js" data-mode="fabio" data-client-key="ck_HKSbJtwQnIv6enW8MuCz1" data-agent-id="v2_agt_UZimmP85" data-name="did-agent" data-monitor="true" data-orientation="horizontal" data-position="right" data-open-mode="expanded" data-auto-connect="true"></script><script>const s=document.getElementById('status');let n=0;const t=setInterval(()=>{n++;const a=window.DID_AGENTS_API;if(a){s.textContent='D-ID loaded — connecting to SARA…';s.className='status ok';clearInterval(t)}else if(n>40){s.textContent='D-ID did not initialize. Check the client-key allowed domain: https://muhammadlai.github.io';s.className='status bad';clearInterval(t)}},250);window.addEventListener('error',e=>{s.textContent='D-ID/browser error: '+e.message;s.className='status bad'});</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SARA — Real D-ID Avatar</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#080811;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+    .wrap{max-width:1250px;margin:auto;padding:28px}
+    .card{background:#121221;border:1px solid #303047;border-radius:18px;padding:20px}
+    h1{margin:0 0 8px;font-size:30px}
+    .hint{color:#aaaabd;line-height:1.5;margin:0 0 14px}
+    .status{margin:12px 0;padding:11px 14px;border-radius:10px;background:#1d1d2d;color:#d9d9e8}
+    .stage{width:100%;min-height:700px;border-radius:16px;background:#07070d;overflow:hidden;position:relative}
+    .stage:empty:before{content:'Connecting SARA…';position:absolute;inset:0;display:grid;place-items:center;color:#aaaabd;font-size:16px}
+    .ok{color:#39df9a}.bad{color:#ff687c}
+    .small{margin-top:10px;color:#77778d;font-size:12px}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>SARA Real Avatar</h1>
+      <p class="hint">Official D-ID Agent Embed • real video avatar • voice • lip-sync • realtime conversation</p>
+      <div id="status" class="status">Starting D-ID…</div>
+      <div id="sara-agent" class="stage"></div>
+      <div class="small">SARA uses the D-ID agent configured in your D-ID Studio account. No fake image or mouth overlay is used.</div>
+    </section>
+  </main>
+
+  <!-- Official D-ID Agents Embed. Full mode requires data-target-id. -->
+  <script
+    type="module"
+    src="https://agent.d-id.com/v2/index.js"
+    data-mode="full"
+    data-target-id="sara-agent"
+    data-client-key="ck_HKSbJtwQnIv6enW8MuCz1"
+    data-agent-id="v2_agt_UZimmP85"
+    data-name="did-agent"
+    data-monitor="true"
+    data-orientation="horizontal"
+    data-open-mode="expanded"
+    data-auto-connect="true">
+  </script>
+
+  <script>
+    const status = document.getElementById('status');
+    let checks = 0;
+    const timer = setInterval(() => {
+      checks++;
+      if (window.DID_AGENTS_API) {
+        status.textContent = 'D-ID loaded — SARA is connecting…';
+        status.className = 'status ok';
+        clearInterval(timer);
+      } else if (checks >= 60) {
+        status.textContent = 'D-ID embed did not initialize. The next check is the D-ID client-key/domain configuration.';
+        status.className = 'status bad';
+        clearInterval(timer);
+      }
+    }, 250);
+
+    window.addEventListener('error', (event) => {
+      if (event && event.message) {
+        status.textContent = 'Browser/D-ID error: ' + event.message;
+        status.className = 'status bad';
+      }
+    });
+  </script>
+</body>
+</html>
