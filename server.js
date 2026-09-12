@@ -75,13 +75,12 @@ async function getTikTokToken() {
 }
 
 const elevenConfigured = Boolean(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID);
-const elevenModel = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5';
+const elevenModel = process.env.ELEVENLABS_MODEL_ID || 'eleven_v3';
 
-app.get('/api/health', (_, res) => res.json({ ok: true, name: 'SARA', version: '4.0', model: MODEL, openai: Boolean(openai), elevenlabs: elevenConfigured, elevenlabsModel: elevenConfigured ? elevenModel : null, didAgentId: process.env.DID_AGENT_ID || null, tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: !process.env.VERCEL, dbPath }));
+app.get('/api/health', (_, res) => res.json({ ok: true, name: 'SARA', version: '4.1', model: MODEL, openai: Boolean(openai), elevenlabs: elevenConfigured, elevenlabsModel: elevenConfigured ? elevenModel : null, didAgentId: process.env.DID_AGENT_ID || 'v2_agt_UZimmP85', tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: !process.env.VERCEL, dbPath }));
 
-app.get('/api/voice/status', (_, res) => res.json({ configured: elevenConfigured, provider: elevenConfigured ? 'ElevenLabs' : 'browser/D-ID fallback', model: elevenConfigured ? elevenModel : null }));
+app.get('/api/voice/status', (_, res) => res.json({ configured: elevenConfigured, provider: elevenConfigured ? 'ElevenLabs v3 Pakistani voice' : 'D-ID/browser fallback', model: elevenConfigured ? elevenModel : null }));
 
-// Public audio endpoint used by D-ID's speak({type:'audio'}) method. The ElevenLabs key stays server-side.
 app.get('/api/voice', async (req, res) => {
   try {
     if (!elevenConfigured) return res.status(503).json({ error: 'ElevenLabs voice is not configured on the server.' });
@@ -90,12 +89,7 @@ app.get('/api/voice', async (req, res) => {
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(process.env.ELEVENLABS_VOICE_ID)}`, {
       method: 'POST',
       headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-      body: JSON.stringify({
-        text,
-        model_id: elevenModel,
-        voice_settings: { stability: 0.42, similarity_boost: 0.82, style: 0.28, use_speaker_boost: true },
-        output_format: 'mp3_44100_128'
-      })
+      body: JSON.stringify({ text, model_id: elevenModel, voice_settings: { stability: 0.42, similarity_boost: 0.82, style: 0.28, use_speaker_boost: true }, output_format: 'mp3_44100_128' })
     });
     if (!r.ok) {
       const detail = await r.text();
@@ -104,8 +98,7 @@ app.get('/api/voice', async (req, res) => {
     }
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-store, max-age=0');
-    const audio = Buffer.from(await r.arrayBuffer());
-    return res.send(audio);
+    return res.send(Buffer.from(await r.arrayBuffer()));
   } catch (e) {
     console.error('[SARA] voice route error', e);
     return res.status(502).json({ error: 'Voice service unavailable.' });
