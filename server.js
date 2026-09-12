@@ -6,7 +6,8 @@ import OpenAI from 'openai';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
-const dbPath = process.env.DB_PATH || (process.env.RENDER ? '/var/data/sara.db' : './sara.db');
+// Vercel functions have a writable temporary directory; local/Render keep their persistent paths.
+const dbPath = process.env.DB_PATH || (process.env.RENDER ? '/var/data/sara.db' : process.env.VERCEL ? '/tmp/sara.db' : './sara.db');
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.exec(`
@@ -74,7 +75,7 @@ async function getTikTokToken() {
   return data.access_token;
 }
 
-app.get('/api/health', (_, res) => res.json({ ok: true, name: 'SARA', version: '3.0', model: MODEL, openai: Boolean(openai), didAgentId: process.env.DID_AGENT_ID || null, tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: true, dbPath }));
+app.get('/api/health', (_, res) => res.json({ ok: true, name: 'SARA', version: '3.1', model: MODEL, openai: Boolean(openai), didAgentId: process.env.DID_AGENT_ID || null, tiktokConfigured: Boolean(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET), persistentMemory: !process.env.VERCEL, dbPath }));
 
 app.get('/api/memories', (req, res) => {
   const sid = clean(req.query.sessionId, 120);
@@ -156,4 +157,6 @@ app.post('/api/tiktok/post-url', async (req, res) => {
   } catch (e) { res.status(502).json({ error: e?.message || 'TikTok post failed' }); }
 });
 
-app.listen(port, () => console.log(`SARA server listening on :${port}`));
+// Express is exported for Vercel. Local/Render still run as a normal Node server.
+export default app;
+if (!process.env.VERCEL) app.listen(port, () => console.log(`SARA server listening on :${port}`));
