@@ -1,14 +1,12 @@
 // SARA Mic Manager
-// Handles browser permission, Android WebView permission handoff, retries and D-ID mic state.
+// Lets the D-ID Agent own the live conversational microphone.
 export class SaraMicManager {
   constructor({ apiGetter, onState = () => {}, onError = () => {} } = {}) {
     this.apiGetter = apiGetter;
     this.onState = onState;
     this.onError = onError;
-    this.stream = null;
     this.enabled = false;
     this.busy = false;
-    this.retryTimer = null;
   }
 
   api() {
@@ -19,63 +17,50 @@ export class SaraMicManager {
     this.onState(text, ok);
   }
 
-  async permissionState() {
-    try {
-      if (!navigator.permissions?.query) return 'unknown';
-      const p = await navigator.permissions.query({ name: 'microphone' });
-      return p.state;
-    } catch (_) {
-      return 'unknown';
-    }
-  }
-
-  async requestHardware() {
+  async requestPermissionFallback() {
     if (!window.isSecureContext && location.hostname !== 'localhost') {
       throw new Error('Microphone ke liye HTTPS secure page zaroori hai');
     }
     if (!navigator.mediaDevices?.getUserMedia) {
-      throw new Error('Is device/browser mein microphone API available nahi hai');
+      throw new Error('Is browser/device mein microphone API available nahi hai');
     }
-
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        channelCount: 1
-      },
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       video: false
     });
-
-    // Keep the permission warm briefly, then release this preflight track.
-    // D-ID owns the actual conversational audio track.
-    this.stream = stream;
-    await new Promise(resolve => setTimeout(resolve, 250));
     stream.getTracks().forEach(track => track.stop());
-    this.stream = null;
   }
 
   async enable({ silent = false } = {}) {
-    if (this.busy) return false;
+    if (this.busy || this.enabled) return this.enabled;
     this.busy = true;
     try {
-      if (!silent) this.state('Microphone permission check ho rahi hai…');
-      await this.requestHardware();
-
       const api = this.api();
       if (!api?.functions?.toggleMicState) {
         throw new Error('D-ID microphone control abhi ready nahi hai');
       }
 
-      await api.functions.toggleMicState(false);
+      if (!silent) this.state('SARA microphone enable ho raha hai…');
+
+      // D-ID owns the actual conversational audio track. Try the official
+      // Agent control first instead of creating a separate browser audio track.
+      try {
+        await api.functions.toggleMicState(false);
+      } catch (firstError) {
+        // If the browser has not granted microphone access yet, trigger the
+        // browser permission prompt once, then ask D-ID to unmute again.
+        await this.requestPermissionFallback();
+        await api.functions.toggleMicState(false);
+      }
+
       this.enabled = true;
-      this.state('Mic ON — SARA continuously sunne ke liye ready hai');
+      this.state('Mic ON — SARA sun rahi hai');
       return true;
     } catch (err) {
       this.enabled = false;
       const message = err?.message || String(err);
       this.onError(message, err);
-      if (!silent) this.state('Mic start nahi hua — permission Allow karein', false);
+      if (!silent) this.state('Mic start nahi hua — browser mein Allow karein', false);
       return false;
     } finally {
       this.busy = false;
@@ -90,12 +75,10 @@ export class SaraMicManager {
   }
 
   async autoStart() {
-    // First try immediately; browsers may show the permission prompt.
     const ok = await this.enable({ silent: true });
     if (ok) return true;
 
-    // If a browser blocks automatic permission until interaction, retry after the
-    // first touch/click/keypress without forcing the user through another setup page.
+    // Browsers may require a user gesture before microphone permission.
     const retry = async () => {
       if (this.enabled) return;
       await this.enable();
@@ -108,8 +91,6 @@ export class SaraMicManager {
   }
 
   destroy() {
-    if (this.retryTimer) clearTimeout(this.retryTimer);
-    this.stream?.getTracks().forEach(track => track.stop());
-    this.stream = null;
+    this.enabled = false;
   }
 }
