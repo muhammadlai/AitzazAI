@@ -12,5 +12,6 @@
   document.body.appendChild(m);if(voiceState)new MutationObserver(()=>window.SARA_SET_SPEAKING?.((voiceState.textContent||'').toLowerCase().includes('speaking'))).observe(voiceState,{childList:true,characterData:true,subtree:true});
   ['fs','topFs'].forEach(id=>{const b=document.getElementById(id);if(b)b.onclick=()=>window.SARA_FULLSCREEN?.()});
   const adv=document.createElement('script');adv.src='./assets/tiktok-command-center.js';document.body.appendChild(adv);
-  const ss=document.getElementById('sideStatus'),sst=document.getElementById('sideStatusText');if(ss)ss.textContent='SARA 3D Free Mode';if(sst)sst.textContent='3D avatar + TikTok creator tools ready';
+  const memVoice=document.createElement('script');memVoice.src='./assets/sara-memory-voice.js';memVoice.defer=true;document.body.appendChild(memVoice);
+  const ss=document.getElementById('sideStatus'),sst=document.getElementById('sideStatusText');if(ss)ss.textContent='SARA 3D Free Mode';if(sst)sst.textContent='3D avatar + Urdu/Hindi voice + memory ready';
 })();
