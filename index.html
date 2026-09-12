@@ -5,22 +5,35 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SARA — Urdu/Hindi AI Agent</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#050509;color:#fff;font-family:system-ui,-apple-system,"Noto Sans Devanagari",sans-serif;overflow:hidden}.app{width:100%;height:100dvh;display:flex;flex-direction:column}.top{position:absolute;z-index:10;left:18px;right:18px;top:14px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}.brand{font-weight:800;font-size:20px;text-shadow:0 2px 12px #000}.tag{font-size:12px;color:#ddd;background:#111c;padding:8px 12px;border-radius:999px}.status{position:absolute;z-index:10;top:54px;left:18px;padding:8px 12px;border-radius:10px;background:#111c;color:#b8b8c8;font-size:13px}.ok{color:#47e2a0}.bad{color:#ff7182}.stage{width:100%;height:100dvh;background:#000;overflow:hidden;position:relative}.stage>*{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}.stage:empty:before{content:'SARA connect ho rahi hai…';position:absolute;inset:0;display:grid;place-items:center;color:#aaa;font-size:18px}.mic{position:absolute;z-index:20;left:50%;bottom:24px;transform:translateX(-50%);border:0;border-radius:999px;padding:14px 22px;background:#fff;color:#111;font-weight:800;font-size:15px;box-shadow:0 8px 30px #0008;cursor:pointer}.mic.on{background:#39df9a}.mic.off{background:#ff7182;color:#fff}.help{position:absolute;z-index:20;left:50%;bottom:76px;transform:translateX(-50%);font-size:12px;color:#ddd;background:#0009;padding:6px 10px;border-radius:8px;white-space:nowrap}.note{display:none}</style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#050509;color:#fff;font-family:system-ui,-apple-system,"Noto Sans Devanagari",sans-serif;overflow:hidden}.app{width:100%;height:100dvh;display:flex;flex-direction:column}.top{position:absolute;z-index:10;left:18px;right:18px;top:14px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}.brand{font-weight:800;font-size:20px;text-shadow:0 2px 12px #000}.tag{font-size:12px;color:#ddd;background:#111c;padding:8px 12px;border-radius:999px}.status{position:absolute;z-index:10;top:54px;left:18px;padding:8px 12px;border-radius:10px;background:#111c;color:#b8b8c8;font-size:13px}.ok{color:#47e2a0}.bad{color:#ff7182}.stage{width:100%;height:100dvh;background:#000;overflow:hidden;position:relative}.stage>*{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}.stage:empty:before{content:'SARA connect ho rahi hai…';position:absolute;inset:0;display:grid;place-items:center;color:#aaa;font-size:18px}.mic{position:absolute;z-index:30;left:50%;bottom:24px;transform:translateX(-50%);border:0;border-radius:999px;padding:14px 22px;background:#fff;color:#111;font-weight:800;font-size:15px;box-shadow:0 8px 30px #0008;cursor:pointer}.mic.on{background:#39df9a}.mic.off{background:#ff7182;color:#fff}.help{position:absolute;z-index:30;left:50%;bottom:76px;transform:translateX(-50%);font-size:12px;color:#fff;background:#000b;padding:7px 11px;border-radius:8px;white-space:nowrap}.note{display:none}</style>
 </head>
 <body>
 <div class="app">
 <div class="top"><div class="brand">SARA</div><div class="tag">اردو • हिंदी • Real-time</div></div>
 <div id="status" class="status">SARA connect ho rahi hai…</div>
 <div id="sara-agent" class="stage"></div>
-<div id="help" class="help">Mic ON karke SARA se baat karein</div>
+<div id="help" class="help">Pehle Mic ON dabayein — Chrome microphone permission maangega</div>
 <button id="mic" class="mic" type="button">🎙️ Mic ON — SARA ko sunao</button>
 </div>
-<script type="module" src="https://agent.d-id.com/v2/index.js" data-mode="full" data-target-id="sara-agent" data-client-key="ck_HKSbJtwQnIv6enW8MuCz1" data-agent-id="v2_agt_UZimmP85" data-name="did-agent" data-monitor="true" data-orientation="vertical" data-open-mode="expanded" data-auto-connect="true" data-speech-silence-timeout-ms="900"></script>
+<script type="module" src="https://agent.d-id.com/v2/index.js" data-mode="full" data-target-id="sara-agent" data-client-key="ck_HKSbJtwQnIv6enW8MuCz1" data-agent-id="v2_agt_UZimmP85" data-name="did-agent" data-monitor="true" data-orientation="vertical" data-open-mode="expanded" data-auto-connect="true" data-speech-silence-timeout-ms="1500"></script>
 <script>
-const s=document.getElementById('status');const mic=document.getElementById('mic');const help=document.getElementById('help');let n=0;let api=null;let micOn=false;
+const s=document.getElementById('status'),mic=document.getElementById('mic'),help=document.getElementById('help');let api=null;let n=0;
 function setup(){api=window.DID_AGENTS_API;if(!api)return false;try{api.configure({orientation:'vertical',openMode:'expanded',showMicToggle:true,showChatToggle:true,showRestartButton:true,autoConnect:true});}catch(e){}if(api.events&&api.events.on){api.events.on('connection',({state})=>{if(state==='connected'){s.textContent='SARA ready — Mic ON karke baat karein';s.className='status ok';}});api.events.on('error',({error})=>{if(error){s.textContent='D-ID error: '+(error.message||error);s.className='status bad';}});}return true;}
 const timer=setInterval(()=>{n++;if(setup()){clearInterval(timer);}},250);
-mic.addEventListener('click',async()=>{if(!api)setup();if(!api){s.textContent='SARA abhi connect ho rahi hai…';return;}try{await api.functions.toggleMicState(false);micOn=true;mic.className='mic on';mic.textContent='🎙️ Mic ON — SARA sun rahi hai';help.textContent='Ab normal Urdu/Hindi mein boliye';s.textContent='Mic ON — SARA sun rahi hai';s.className='status ok';}catch(e){micOn=false;mic.className='mic off';mic.textContent='🎙️ Mic permission dein';help.textContent='Browser microphone permission Allow karein';s.textContent='Mic start nahi hua — browser mein Microphone Allow karein';s.className='status bad';}});
+mic.addEventListener('click',async()=>{
+ if(!api)setup();
+ if(!api){s.textContent='SARA abhi connect ho rahi hai…';return;}
+ mic.disabled=true;mic.textContent='🎙️ Microphone check ho raha hai…';
+ try{
+   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('Browser microphone API unavailable');
+   const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+   stream.getTracks().forEach(t=>t.stop());
+   await api.functions.toggleMicState(false);
+   mic.className='mic on';mic.textContent='🎙️ Mic ON — SARA sun rahi hai';help.textContent='Ab seedha Urdu/Hindi mein boliye — 2 second ruk kar jawab ka wait karein';s.textContent='Mic ON — SARA sun rahi hai';s.className='status ok';
+ }catch(e){
+   mic.disabled=false;mic.className='mic off';mic.textContent='🎙️ Mic permission dein';help.textContent='Chrome ke microphone popup mein Allow karein';s.textContent='Mic start nahi hua: '+(e.message||e);s.className='status bad';
+ }
+});
 window.addEventListener('error',e=>{if(e&&e.message){s.textContent='D-ID error: '+e.message;s.className='status bad';}});
 </script>
 </body>
