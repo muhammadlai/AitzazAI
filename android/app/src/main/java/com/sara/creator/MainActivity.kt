@@ -32,7 +32,7 @@ class MainActivity : Activity() {
         settings.allowContentAccess = true
         settings.allowFileAccess = false
         settings.javaScriptCanOpenWindowsAutomatically = true
-        settings.userAgentString = "${settings.userAgentString} SARA-Android/1.3"
+        settings.userAgentString = "${settings.userAgentString} SARA-Android/1.3.1"
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = false
@@ -41,7 +41,7 @@ class MainActivity : Activity() {
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
                 runOnUiThread {
-                    val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                    val wantsAudioPermission = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
                     val hasAudioPermission = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
                     if (wantsAudioPermission && hasAudioPermission) {
                         request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
@@ -73,8 +73,6 @@ class MainActivity : Activity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == micRequestCode) {
-            // Load even if denied so the web page can explain the permission problem.
-            // If granted, the WebView PermissionRequest will be auto-approved.
             loadSara()
         }
     }
