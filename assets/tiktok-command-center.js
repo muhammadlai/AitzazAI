@@ -6,18 +6,33 @@
   const esc = s => String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
 
   function showTab(tabName) {
-    const tabs = document.querySelectorAll('.tab-panel');
-    const navs = document.querySelectorAll('.nav');
     const target = $('tab-' + tabName);
     if (!target) return false;
-    navs.forEach(x => x.classList.toggle('active', x.dataset.tab === tabName));
-    tabs.forEach(x => x.classList.add('hidden'));
+    document.querySelectorAll('.nav').forEach(x => x.classList.toggle('active', x.dataset.tab === tabName));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.add('hidden'));
     target.classList.remove('hidden');
     if (tabName === 'tiktok') {
-      loadTikTok();
-      setTimeout(refresh, 100);
+      if (typeof window.loadTikTok === 'function') window.loadTikTok();
+      else setTimeout(() => typeof window.loadTikTok === 'function' && window.loadTikTok(), 50);
+      setTimeout(refresh, 150);
     }
     return true;
+  }
+
+  function forceTikTokNavigation() {
+    const btn = document.querySelector('.nav[data-tab="tiktok"]');
+    if (!btn || btn.dataset.saraNavFixed === '1') return;
+    btn.dataset.saraNavFixed = '1';
+    const handler = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      showTab('tiktok');
+      return false;
+    };
+    btn.addEventListener('pointerdown', handler, true);
+    btn.addEventListener('click', handler, true);
+    btn.onclick = handler;
   }
 
   function inject() {
@@ -39,14 +54,14 @@
   async function refresh() {
     try {
       const r = await api('/api/tiktok/profile'); const d = await r.json(); const u = d?.data?.user;
-      if (!r.ok || !u) { $('saraTTAnalytics').textContent = JSON.stringify(d, null, 2); return; }
+      if (!r.ok || !u) { const out = $('saraTTAnalytics'); if(out) out.textContent = JSON.stringify(d, null, 2); return; }
       $('saraTTFollowers').textContent = Number(u.follower_count || 0).toLocaleString();
       $('saraTTLikes').textContent = Number(u.likes_count || 0).toLocaleString();
       $('saraTTVideos').textContent = Number(u.video_count || 0).toLocaleString();
       const vr = await api('/api/tiktok/videos?max_count=20'); const vd = await vr.json(); const vs = vd?.data?.videos || [];
       $('saraTTViews').textContent = vs.reduce((n, v) => n + Number(v.view_count || 0), 0).toLocaleString();
       $('saraTTAnalytics').textContent = `@${u.username || ''} · ${u.display_name || 'TikTok'}\nVerified: ${u.is_verified ? 'Yes' : 'No'}\nRecent videos: ${vs.length}`;
-    } catch (e) { $('saraTTAnalytics').textContent = 'Analytics unavailable: ' + e.message; }
+    } catch (e) { const out=$('saraTTAnalytics'); if(out) out.textContent = 'Analytics unavailable: ' + e.message; }
   }
 
   async function ai(prompt) {
@@ -69,12 +84,17 @@
   }
 
   inject();
+  forceTikTokNavigation();
+  const navObserver = new MutationObserver(forceTikTokNavigation);
+  navObserver.observe(document.body, { childList:true, subtree:true });
   document.addEventListener('click', e => {
     const btn = e.target.closest?.('.nav[data-tab="tiktok"]');
     if (!btn) return;
     e.preventDefault();
+    e.stopPropagation();
     e.stopImmediatePropagation();
     showTab('tiktok');
   }, true);
-  document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.tab==='tiktok'){setTimeout(refresh,80);}}));
+  window.SARA_OPEN_TIKTOK = () => showTab('tiktok');
+  window.SARA_REFRESH_TIKTOK = refresh;
 })();
