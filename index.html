@@ -1,28 +1,143 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07080d"><title>SARA — AI Creator</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080d">
+<title>SARA — AI Creator</title>
 <link rel="stylesheet" href="./assets/sara.css">
 </head>
 <body>
 <main class="app">
-  <header class="topbar"><div><strong>SARA</strong><span>AI Creator</span></div><div id="status" class="status offline">D-ID connecting…</div></header>
-  <section class="stage"><div id="sara-agent" class="agent"><div class="fallback"><div class="pulse"></div><h1>SARA</h1><p>Real-time AI host</p><button id="retry">Reconnect</button></div></div></section>
-  <section class="controls"><button id="mic" disabled>🎙️ <span>Mic</span></button><button id="intro">👋 SARA bolo</button><button id="fs">⛶ Fullscreen</button></section>
-  <section class="panel"><div><b>Brain</b><span>OpenAI + SARA memory</span></div><div><b>Language</b><span>Urdu · Hindi · English</span></div><div><b>TikTok</b><span>Creator tools ready</span></div></section>
+  <header class="topbar">
+    <div><strong>SARA</strong><span>AI Creator</span></div>
+    <div id="status" class="status offline">D-ID connecting…</div>
+  </header>
+
+  <section class="stage">
+    <div id="sara-agent" class="agent">
+      <div class="fallback">
+        <div class="pulse"></div><h1>SARA</h1><p>Real-time AI host</p>
+        <button id="retry">Reconnect</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <button id="mic" disabled>🎙️ <span>Mic</span></button>
+    <button id="intro">👋 SARA bolo</button>
+    <button id="fs">⛶ Fullscreen</button>
+  </section>
+
+  <section class="panel">
+    <div><b>Brain</b><span>OpenAI + SARA memory</span></div>
+    <div><b>Language</b><span>Urdu · Hindi · English</span></div>
+    <div><b>TikTok</b><span>Creator tools ready</span></div>
+  </section>
 </main>
+
 <script>
-const CFG={agentId:'v2_agt_UZimmP85',clientKey:'ck_HKSbJtwQnIv6enW8MuCz1'};
-const $=id=>document.getElementById(id); const status=$('status'); const mic=$('mic');
-function setStatus(t,ok=false){status.textContent=t;status.className='status '+(ok?'online':'offline')}
-window.addEventListener('did-agent-event',e=>{const d=e.detail||{}; console.log('D-ID',d);});
-window.addEventListener('load',()=>setTimeout(()=>{if(status.textContent.includes('connecting')) setStatus('Waiting for D-ID…')},2500));
-$('retry').onclick=()=>location.reload(); $('fs').onclick=()=>document.documentElement.requestFullscreen?.();
-$('intro').onclick=()=>{window.dispatchEvent(new CustomEvent('sara-say',{detail:{text:'Assalam o Alaikum! Main SARA hoon. Aaj hum kya baat karein?'}}));};
-$('mic').onclick=()=>{document.dispatchEvent(new CustomEvent('did-agent-toggle-mic'));};
-window.addEventListener('message',e=>console.log('SARA message',e.data));
+const $ = id => document.getElementById(id);
+const status = $('status');
+const mic = $('mic');
+const intro = $('intro');
+const fs = $('fs');
+const retry = $('retry');
+const greeting = 'Assalam o Alaikum! Main SARA hoon. Aaj hum kya baat karein?';
+
+function setStatus(text, online=false) {
+  status.textContent = text;
+  status.className = 'status ' + (online ? 'online' : 'offline');
+}
+
+function getAgentApi() {
+  return window.DID_AGENTS_API || null;
+}
+
+async function waitForAgentApi(timeout=15000) {
+  const started = Date.now();
+  while (!getAgentApi() && Date.now() - started < timeout) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return getAgentApi();
+}
+
+window.addEventListener('load', async () => {
+  const api = await waitForAgentApi();
+  if (!api) {
+    setStatus('D-ID API not loaded');
+    return;
+  }
+
+  api.events.on('connection', ({state}) => {
+    if (state === 'connected') {
+      setStatus('SARA online', true);
+      mic.disabled = false;
+    } else if (state === 'connecting' || state === 'new') {
+      setStatus('D-ID connecting…');
+    } else if (state === 'disconnected' || state === 'closed') {
+      setStatus('D-ID disconnected');
+      mic.disabled = true;
+    } else if (state === 'fail') {
+      setStatus('D-ID unavailable');
+      mic.disabled = true;
+    }
+  });
+
+  api.events.on('agentActivity', ({state}) => {
+    if (state === 'TALKING') setStatus('SARA speaking', true);
+    else if (state === 'LOADING') setStatus('SARA thinking…', true);
+    else if (state === 'IDLE') setStatus('SARA online', true);
+  });
+
+  api.events.on('error', ({error}) => {
+    console.error('D-ID error:', error);
+    const code = error?.code || error?.type;
+    setStatus(code ? `D-ID error: ${code}` : 'D-ID error');
+    mic.disabled = true;
+  });
+});
+
+intro.onclick = async () => {
+  const api = await waitForAgentApi();
+  if (!api?.functions?.speak) return setStatus('D-ID not ready');
+  try {
+    await api.functions.speak({type:'text', input:greeting});
+  } catch (e) {
+    console.error(e);
+    setStatus('SARA could not speak');
+  }
+};
+
+mic.onclick = async () => {
+  const api = getAgentApi();
+  if (!api?.functions?.toggleMicState) return;
+  try { await api.functions.toggleMicState(); } catch (e) { console.error(e); }
+};
+
+fs.onclick = async () => {
+  const api = getAgentApi();
+  try {
+    if (api?.functions?.requestFullscreen) await api.functions.requestFullscreen(true);
+    else await document.documentElement.requestFullscreen?.();
+  } catch (e) { console.error(e); }
+};
+
+retry.onclick = () => location.reload();
 </script>
-<script type="module" src="https://agent.d-id.com/v2/index.js" data-mode="full" data-target-id="sara-agent" data-client-key="ck_HKSbJtwQnIv6enW8MuCz1" data-agent-id="v2_agt_UZimmP85" data-name="did-agent" data-monitor="true" data-orientation="vertical" data-open-mode="expanded" data-auto-connect="true" data-speech-silence-timeout-ms="1500"></script>
+
+<script type="module"
+  src="https://agent.d-id.com/v2/index.js"
+  data-mode="full"
+  data-target-id="sara-agent"
+  data-client-key="ck_HKSbJtwQnIv6enW8MuCz1"
+  data-agent-id="v2_agt_UZimmP85"
+  data-name="did-agent"
+  data-monitor="true"
+  data-orientation="vertical"
+  data-open-mode="expanded"
+  data-auto-connect="true">
+</script>
 <script src="./assets/did-bridge.js"></script>
-</body></html>
+</body>
+</html>
