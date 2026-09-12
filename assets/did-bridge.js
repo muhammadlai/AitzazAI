@@ -9,6 +9,7 @@
   let api = null;
   let originalSpeak = null;
   let voicePatched = false;
+  let didRetryInjected = false;
 
   const setStatus = (text, online = false) => {
     if (!status) return;
@@ -64,6 +65,28 @@
     }
   }
 
+  function injectCurrentStudioEmbed() {
+    if (didRetryInjected || connected) return;
+    didRetryInjected = true;
+    const old = document.querySelector('script[src*="agent.d-id.com/v2/index.js"]');
+    if (old) old.remove();
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://agent.d-id.com/v2/index.js';
+    script.dataset.mode = 'fabio';
+    script.dataset.clientKey = 'ck_HKSbJtwQnIv6enW8MuCz1';
+    script.dataset.agentId = 'v2_agt_UZimmP85';
+    script.dataset.name = 'did-agent';
+    script.dataset.monitor = 'true';
+    script.dataset.orientation = 'horizontal';
+    script.dataset.position = 'right';
+    script.dataset.openMode = 'expanded';
+    script.dataset.autoConnect = 'true';
+    document.body.appendChild(script);
+    setStatus('D-ID reconnecting…');
+    setFallback('SARA ka live avatar dobara connect ho raha hai…');
+  }
+
   const markOffline = (message = 'SARA ready hai. Live avatar abhi connect nahi hua.') => {
     connected = false;
     setStatus('SARA avatar offline');
@@ -72,13 +95,21 @@
     if (voiceState && !voiceState.textContent.includes('speaking')) voiceState.textContent = 'Voice engine: fallback ready';
   };
 
-  setTimeout(() => { if (!connected) markOffline('SARA ready hai. D-ID avatar connect nahi hua — Reconnect try karein.'); }, 10000);
+  setTimeout(() => {
+    if (!connected) {
+      injectCurrentStudioEmbed();
+      setTimeout(() => { if (!connected) markOffline('D-ID Agent available nahi hua. SARA ki AI chat aur browser voice phir bhi ready hain.'); }, 12000);
+    }
+  }, 3500);
   if (mic) mic.disabled = false;
 
   waitForApi().then(agentApi => {
     api = agentApi;
     if (!api) {
-      markOffline('SARA ready hai. D-ID service load nahi hui. Browser voice fallback available hai.');
+      if (!didRetryInjected) injectCurrentStudioEmbed();
+      setTimeout(() => {
+        if (!window.DID_AGENTS_API) markOffline('D-ID service load nahi hui. Browser voice fallback available hai.');
+      }, 12000);
       return;
     }
 
@@ -102,7 +133,8 @@
       } else if (s === 'disconnected' || s === 'closed') {
         markOffline('D-ID connection band ho gaya. Reconnect karein.');
       } else if (s === 'fail' || s === 'failed') {
-        markOffline('D-ID connection fail hua. D-ID Allowed Domain aur Agent ID/key check karein.');
+        if (!didRetryInjected) injectCurrentStudioEmbed();
+        else markOffline('D-ID connection fail hua. Agent/plan availability check karein.');
       }
     });
 
@@ -113,13 +145,13 @@
       const c = String(code).toUpperCase();
       if (c.includes('AUTH')) {
         setStatus('D-ID authorization error');
-        setFallback('D-ID client key/domain authorize nahi hua. D-ID Studio mein aitzaz-ai.vercel.app ko Allowed Domains mein add karein.');
+        setFallback('D-ID client key/domain authorize nahi hua. Allowed Domain verify karein.');
       } else if (c.includes('NETWORK')) {
         setStatus('D-ID network error');
         setFallback('D-ID network connection nahi ban saki. Reconnect karein.');
       } else {
         setStatus(code ? `D-ID error: ${code}` : 'D-ID error');
-        setFallback('D-ID avatar load nahi ho saka. SARA ki AI chat aur fallback voice available rehengi.');
+        setFallback('D-ID Agent temporarily unavailable hai. SARA ki AI chat aur browser voice available rehengi.');
       }
       if (mic) mic.disabled = false;
     });
@@ -139,5 +171,5 @@
     });
   });
 
-  window.SARA_DID_STATE = () => ({ connected, api, voicePatched });
+  window.SARA_DID_STATE = () => ({ connected, api, voicePatched, didRetryInjected });
 })();
