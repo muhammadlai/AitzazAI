@@ -4,8 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.Window
-import android.view.WindowManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -16,21 +14,14 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private val saraUrl = "https://muhammadlai.github.io/AitzazAI/"
     private val micRequestCode = 1001
+    private var pageLoaded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestWindowFeature(Window.FEATURE_NO_TITLE)
-        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
-
         webView = WebView(this)
         setContentView(webView)
         configureWebView()
-
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), micRequestCode)
-        } else {
-            loadSara()
-        }
+        ensureMicPermissionAndLoad()
     }
 
     private fun configureWebView() {
@@ -41,7 +32,7 @@ class MainActivity : Activity() {
         settings.allowContentAccess = true
         settings.allowFileAccess = false
         settings.javaScriptCanOpenWindowsAutomatically = true
-        settings.userAgentString = "${settings.userAgentString} SARA-Android/1.2"
+        settings.userAgentString = "${settings.userAgentString} SARA-Android/1.3"
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = false
@@ -50,9 +41,10 @@ class MainActivity : Activity() {
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
                 runOnUiThread {
-                    val audio = request.resources.filter { it == PermissionRequest.RESOURCE_AUDIO_CAPTURE }.toTypedArray()
-                    if (audio.isNotEmpty() && checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                        request.grant(audio)
+                    val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                    val hasAudioPermission = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                    if (wantsAudioPermission && hasAudioPermission) {
+                        request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
                     } else {
                         request.deny()
                     }
@@ -61,13 +53,37 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun ensureMicPermissionAndLoad() {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            loadSara()
+        } else {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), micRequestCode)
+        }
+    }
+
     private fun loadSara() {
-        webView.loadUrl(saraUrl)
+        if (!pageLoaded) {
+            pageLoaded = true
+            webView.loadUrl(saraUrl)
+        } else {
+            webView.reload()
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == micRequestCode) loadSara()
+        if (requestCode == micRequestCode) {
+            // Load even if denied so the web page can explain the permission problem.
+            // If granted, the WebView PermissionRequest will be auto-approved.
+            loadSara()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (pageLoaded && checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            webView.evaluateJavascript("window.dispatchEvent(new Event('sara-android-mic-ready'))", null)
+        }
     }
 
     override fun onDestroy() {
