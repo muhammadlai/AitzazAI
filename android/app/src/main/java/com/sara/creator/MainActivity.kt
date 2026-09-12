@@ -1,0 +1,7 @@
+package com.sara.creator
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.webkit.*
+class MainActivity:Activity(){private lateinit var w:WebView;private val url="https://muhammadlai.github.io/AitzazAI/";override fun onCreate(b:Bundle?){super.onCreate(b);w=WebView(this);setContentView(w);w.settings.javaScriptEnabled=true;w.settings.domStorageEnabled=true;w.settings.mediaPlaybackRequiresUserGesture=false;w.settings.userAgentString=w.settings.userAgentString+" SARA-Android/1.0";w.webViewClient=WebViewClient();w.webChromeClient=object:WebChromeClient(){override fun onPermissionRequest(r:PermissionRequest){runOnUiThread{val audio=r.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE);if(audio&&checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED)r.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))else r.deny()}}};if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),1001);else w.loadUrl(url)}override fun onRequestPermissionsResult(c:Int,p:Array<out String>,g:IntArray){super.onRequestPermissionsResult(c,p,g);if(c==1001)w.loadUrl(url)}}
