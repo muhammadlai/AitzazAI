@@ -36,3 +36,12 @@ jobs:
         with:
           name: SARA-Android-APK
           path: SARA-Android.apk
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="android-v1.0.${{ github.run_number }}"
+          gh release create "$TAG" SARA-Android.apk \
+            --title "SARA Android APK $TAG" \
+            --notes "SARA Android APK built from the existing AitzazAI project."
