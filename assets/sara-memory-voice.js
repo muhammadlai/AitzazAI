@@ -107,6 +107,16 @@
   function init(){
     if(initialized)return;initialized=true;patchSpeech();buildVoiceUI();updateCount();
     window.SARA_BROWSER_SPEAK=speakLong;
+    // Keep the paid D-ID path out of the voice loop. If an older D-ID
+    // object is still present, route its speak call to the free VRM/browser voice.
+    try{
+      const did=window.DID_AGENTS_API;
+      if(did?.functions) did.functions.speak=async({input})=>{
+        const ok=speakLong(input);
+        if(!ok)throw new Error('Browser speech unavailable');
+        return {ok:true};
+      };
+    }catch{}
     let tries=0;const timer=setInterval(()=>{buildVoiceUI();restore();if(++tries>20)clearInterval(timer)},250);
   }
   window.SARA_MEMORY={get:()=>memory.slice(),clear,add:addMemory,init};
