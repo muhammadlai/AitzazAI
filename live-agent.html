@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SARA AI — TikTok LIVE Host</title>
+<link rel="stylesheet" href="./assets/live-agent.css">
+</head>
+<body>
+<div class="live-shell">
+  <header><div><b>SARA AI LIVE</b><small>Virtual host · AI disclosure enabled</small></div><span id="connection" class="pill">Preparing…</span></header>
+  <main>
+    <section class="stage">
+      <div id="sara-agent" class="agent"><div class="fallback"><strong>SARA</strong><span>Connecting avatar…</span></div></div>
+      <div class="overlay"><span>🤖 AI VIRTUAL HOST</span><span id="liveTimer">00:00</span></div>
+    </section>
+    <aside class="panel">
+      <h2>LIVE Control</h2>
+      <button id="start" class="primary">Start SARA</button>
+      <button id="intro">Speak LIVE Intro</button>
+      <label>Topic<input id="topic" value="Friendly TikTok LIVE battle"></label>
+      <label>Viewer name<input id="viewer" placeholder="Viewer name"></label>
+      <label>Message<input id="comment" placeholder="Hello SARA!"></label>
+      <button id="reply">AI Reply to Comment</button>
+      <div class="gift-test">
+        <h3>Gift reaction test</h3>
+        <p>These buttons simulate events for testing. Real TikTok LIVE gift events are not connected because TikTok does not expose a general public LIVE gift/battle automation API.</p>
+        <button data-gift="Rose">🌹 Rose</button><button data-gift="Heart">❤️ Heart</button><button data-gift="Galaxy">🌌 Galaxy</button>
+      </div>
+      <div id="log" class="log"></div>
+      <p class="note">Use this page as a browser source/window in TikTok LIVE Studio. The AI must remain disclosed as virtual/AI.</p>
+    </aside>
+  </main>
+</div>
+<script type="module" src="https://agent.d-id.com/v2/index.js" data-mode="full" data-target-id="sara-agent" data-client-key="ck_HKSbJtwQnIv6enW8MuCz1" data-agent-id="v2_agt_UZimmP85" data-name="did-agent" data-orientation="vertical" data-open-mode="expanded" data-auto-connect="true"></script>
+<script>
+const $=id=>document.getElementById(id);const qs=new URLSearchParams(location.search);const API=(qs.get('api')||localStorage.getItem('sara_api_base')||location.origin).replace(/\/$/,'');let started=Date.now();let timer=null;
+function log(text){const d=document.createElement('div');d.textContent=text;$('log').prepend(d)}
+async function speak(text){const did=window.DID_AGENTS_API;if(did?.functions?.speak){try{await did.functions.speak({type:'text',input:text});return true}catch(e){console.warn(e)}}if(window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ur-PK';u.rate=.96;speechSynthesis.speak(u);return true}return false}
+async function ai(message){const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'tiktok-live-'+location.hostname,message})});const d=await r.json();if(!r.ok)throw new Error(d.error||'AI request failed');return d.answer}
+$('start').onclick=()=>{started=Date.now();clearInterval(timer);timer=setInterval(()=>{const s=Math.floor((Date.now()-started)/1000);$('liveTimer').textContent=[Math.floor(s/60),s%60].map(x=>String(x).padStart(2,'0')).join(':')},1000);$('connection').textContent='SARA ready';log('SARA LIVE host ready')};
+$('intro').onclick=async()=>{const text='Assalam o Alaikum! Main SARA hoon — Aitzaz ki AI virtual host. Aaj hum LIVE hain, comments mein salam karein aur friendly battle enjoy karein!';await speak(text);log('Intro spoken')};
+$('reply').onclick=async()=>{const viewer=$('viewer').value.trim()||'friend';const comment=$('comment').value.trim();if(!comment)return;try{const answer=await ai(`TikTok LIVE comment from ${viewer}: ${comment}. Reply as SARA in short natural Roman Urdu, friendly and energetic. You are an AI virtual host; do not pretend to be a real human.`);await speak(answer);log(viewer+': '+comment+' → '+answer)}catch(e){log('AI error: '+e.message)}};
+document.querySelectorAll('[data-gift]').forEach(b=>b.onclick=async()=>{const gift=b.dataset.gift;const text=`Shukriya ${gift}! ❤️ Aap ne SARA ko gift bheja — bohat pyaar! Friendly battle continue rakhein!`;await speak(text);log('TEST gift: '+gift+' → reaction spoken')});
+fetch(API+'/api/health').then(r=>r.json()).then(d=>{$('connection').textContent=d.ok?'Backend online':'Backend error'}).catch(()=>{$('connection').textContent='Backend offline';log('Set backend URL with ?api=...')});
+</script>
+</body></html>
