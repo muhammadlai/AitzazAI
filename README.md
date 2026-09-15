@@ -14,6 +14,11 @@ SARA is a production-oriented AI creator foundation: real-time D-ID avatar, Open
 - Responsive creator dashboard with chat, memory, TikTok and settings panels.
 - Dockerfile for backend hosting.
 - GitHub Pages static deployment and Android APK workflow.
+- **TikTok LIVE virtual-host control page:** `live-agent.html` provides a D-ID avatar stage, AI comment replies, voice reactions, LIVE timer, and gift-reaction test buttons. It is designed to be used as a browser/window source in TikTok LIVE Studio.
+
+## LIVE limitations
+
+The LIVE page does **not** pretend to be a human and explicitly identifies SARA as an AI virtual host. The gift buttons are local test events only. TikTok's public APIs do not provide a general endpoint for starting a LIVE, reading arbitrary LIVE gifts, or automating LIVE battles, so those undocumented actions are not fabricated. The actual broadcast must be started in TikTok LIVE Studio (or another officially supported TikTok workflow) by an eligible account.
 
 ## Security
 
@@ -23,10 +28,12 @@ Only the D-ID client key and agent ID are exposed to the browser. OpenAI and Tik
 
 GitHub Pages can host the static UI, but it cannot run Node.js. For the complete app, deploy `server.js`/`Dockerfile` to a Node/Docker host and set the environment variables from `.env.example`. Set `SARA_CORS_ORIGIN` to the exact frontend origin when frontend and backend are on different domains.
 
+Open `live-agent.html` after deployment. If the backend is on another domain, use `?api=https://your-backend.example.com` or set the backend URL in the existing SARA settings first.
+
 ## D-ID requirement
 
 The configured agent must be healthy/ready in D-ID Studio and its client key must allow the deployed domain. The embed itself uses D-ID WebRTC; it does not fake lip-sync in the browser.
 
 ## TikTok requirement
 
-Only official TikTok APIs are used. Direct posting requires the appropriate approved scope. TikTok states that unaudited clients are restricted to private viewing for Direct Post until the client passes audit. Undocumented LIVE/battle automation is intentionally not included.
+Only official TikTok APIs are used. Direct posting requires the appropriate approved scope. TikTok states that unaudited clients are restricted to private viewing for Direct Post until the client passes audit. Undocumented LIVE/battle/gift automation is intentionally not included.
