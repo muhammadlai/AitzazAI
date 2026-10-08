@@ -1,1 +1,16 @@
-{"name":"sara-ai","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node server.js"},"dependencies":{"express":"^5.1.0","openai":"^6.1.0","dotenv":"^17.2.2","better-sqlite3":"^12.2.0"}}
+{
+  "name": "aitzaz-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --check server.js && node --check whatsapp-agent.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "openai": "^6.1.0",
+    "dotenv": "^17.2.2",
+    "better-sqlite3": "^12.2.0"
+  }
+}
