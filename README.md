@@ -37,3 +37,37 @@ The configured agent must be healthy/ready in D-ID Studio and its client key mus
 ## TikTok requirement
 
 Only official TikTok APIs are used. Direct posting requires the appropriate approved scope. TikTok states that unaudited clients are restricted to private viewing for Direct Post until the client passes audit. Undocumented LIVE/battle/gift automation is intentionally not included.
+
+
+## WhatsApp AI Agent
+
+The repository now includes a real WhatsApp Business Cloud API agent in `whatsapp-agent.js`.
+
+### Implemented
+
+- Meta WhatsApp Cloud API webhook verification.
+- Incoming WhatsApp text/image/audio/document/video/location event parsing.
+- Idempotent incoming-message handling using the WhatsApp message ID.
+- SQLite contacts, conversations and message history.
+- AI/HUMAN/PAUSED conversation modes.
+- OpenAI primary AI provider.
+- Gemini fallback provider.
+- Server-side API keys only.
+- Automatic WhatsApp text replies.
+- Human-agent outbound replies from the dashboard/API.
+- Conversation and message APIs for a dashboard.
+- Configurable AI system prompt and fallback reply.
+
+### WhatsApp setup
+
+Configure the variables in `.env.example`, then point the Meta webhook to:
+
+`https://YOUR_BACKEND_DOMAIN/api/whatsapp/webhook`
+
+Use the same `WHATSAPP_VERIFY_TOKEN` in Meta webhook verification.
+
+The system intentionally reports `NOT CONFIGURED` until the required WhatsApp credentials exist. It does not fake a connected state.
+
+### Important
+
+Use the official Meta WhatsApp Business Cloud API. Do not replace this integration with WhatsApp Web scraping or browser automation for production use.
